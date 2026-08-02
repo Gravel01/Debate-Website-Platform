@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drill Room — Watkins Debate</title>
+<meta name="theme-color" content="#F5F5F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Drill Room">
+<style>
+:root{
+  --bg:#F5F5F7;
+  --card:#FFFFFF;
+  --text:#1D1D1F;
+  --text-2:#6E6E73;
+  --text-3:#86868B;
+  --line:rgba(0,0,0,.08);
+  --blue:#0071E3;
+  --blue-press:#0077ED;
+  --green:#34C759;
+  --red:#FF3B30;
+  --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+.hidden{display:none !important}
+
+/* ================= LOGIN ================= */
+#loginScreen{
+  min-height:100svh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px;
+}
+.login-card{
+  width:100%;max-width:400px;background:var(--card);
+  border-radius:24px;padding:40px 32px 32px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.08);
+  animation:loginIn .4s cubic-bezier(.25,.7,.3,1);
+}
+@keyframes loginIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.login-mark{
+  width:56px;height:56px;border-radius:14px;margin:0 auto 20px;
+  background:linear-gradient(135deg,#0A84FF,#0055CC);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:24px;font-weight:700;letter-spacing:-.03em;
+  box-shadow:0 6px 18px rgba(0,113,227,.35);
+}
+.login-card h1{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+  font-size:26px;font-weight:700;letter-spacing:-.025em;text-align:center;
+}
+.login-card .sub{
+  font-size:14.5px;color:var(--text-2);text-align:center;
+  margin:8px 0 26px;
+}
+.login-card .field{margin-bottom:14px}
+.login-card label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.login-card input[type=text],.login-card input[type=email]{
+  width:100%;font-family:inherit;font-size:15.5px;color:var(--text);
+  background:var(--bg);border:1px solid transparent;border-radius:12px;
+  padding:12px 14px;transition:all .15s ease;
+}
+.login-card input:focus{
+  outline:none;background:var(--card);border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,113,227,.15);
+}
+.login-card ::placeholder{color:var(--text-3)}
+.optin{
+  display:flex;gap:10px;align-items:flex-start;
+  font-size:13px;color:var(--text-2);
+  margin:4px 0 18px;cursor:pointer;user-select:none;
+}
+.optin input{margin-top:2px;width:16px;height:16px;accent-color:var(--blue);flex:none;cursor:pointer}
+.login-err{font-size:13px;color:var(--red);font-weight:500;text-align:center;min-height:1.2em;margin-bottom:6px}
+.login-foot{margin-top:18px;font-size:12px;color:var(--text-3);text-align:center;line-height:1.5}
+.login-brand{margin-top:22px;font-size:13px;color:var(--text-3)}
+
+/* ================= APP CHROME ================= */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  background:rgba(245,245,247,.8);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;height:52px}
+.logo{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.logo span{color:var(--text-3);font-weight:400}
+.avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;cursor:pointer;border:none;
+}
+.avatar:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.hero{padding:44px 0 8px;text-align:center}
+.hero h1{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+  font-size:clamp(30px,6vw,44px);font-weight:700;letter-spacing:-.025em;
+}
+.hero p{color:var(--text-2);font-size:17px;margin-top:6px}
+.hero .week{
+  display:inline-block;margin-top:14px;
+  font-size:13px;font-weight:500;color:var(--text-2);
+  background:var(--card);border:1px solid var(--line);
+  padding:5px 14px;border-radius:100px;
+}
+
+.tabs-outer{
+  position:sticky;top:52px;z-index:25;
+  padding:16px 0 20px;
+  background:linear-gradient(var(--bg) 70%, transparent);
+}
+.tabs{
+  display:flex;gap:2px;background:rgba(0,0,0,.055);
+  padding:3px;border-radius:100px;max-width:420px;margin:0 auto;
+}
+.tab{
+  flex:1;border:none;background:transparent;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:500;color:var(--text-2);
+  padding:8px 0;border-radius:100px;transition:color .15s ease;white-space:nowrap;
+}
+.tab[aria-selected="true"]{
+  background:var(--card);color:var(--text);font-weight:600;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+}
+.tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.panel{display:none;padding-bottom:64px;animation:fadeUp .25s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  padding:24px;
+}
+
+/* ---------- drills ---------- */
+.progress-card{display:flex;align-items:center;gap:18px}
+.ring{position:relative;width:64px;height:64px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .track{stroke:rgba(0,0,0,.07)}
+.ring .fill{stroke:var(--green);transition:stroke-dashoffset .4s ease}
+.ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.progress-copy h3{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.progress-copy p{font-size:14px;color:var(--text-2);margin-top:2px}
+
+.drill-group{margin-top:16px;background:var(--card);border-radius:var(--radius);
+  box-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);overflow:hidden}
+.drill{display:flex;align-items:flex-start;gap:14px;padding:16px 20px;cursor:pointer;transition:background .12s ease}
+.drill:hover{background:rgba(0,0,0,.02)}
+.drill + .drill{border-top:1px solid var(--line)}
+.check{
+  flex:none;width:24px;height:24px;margin-top:1px;border-radius:50%;
+  border:1.5px solid rgba(0,0,0,.22);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s ease;background:transparent;
+}
+.check svg{opacity:0;transform:scale(.6);transition:all .15s ease}
+.drill.done .check{background:var(--green);border-color:var(--green)}
+.drill.done .check svg{opacity:1;transform:scale(1)}
+.drill-body{flex:1;min-width:0}
+.drill-title{font-size:15.5px;font-weight:600;letter-spacing:-.01em;transition:color .15s ease}
+.drill.done .drill-title{color:var(--text-3);text-decoration:line-through;text-decoration-thickness:1px}
+.drill-desc{font-size:13.5px;color:var(--text-2);margin-top:2px}
+.drill.done .drill-desc{color:var(--text-3)}
+.drill-time{flex:none;font-size:12.5px;color:var(--text-3);font-weight:500;margin-top:3px}
+.empty-note{padding:24px;text-align:center;color:var(--text-2);font-size:14px}
+
+/* ---------- forms ---------- */
+.form-intro{text-align:center;margin-bottom:20px}
+.form-intro h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.form-intro p{font-size:14.5px;color:var(--text-2);margin-top:4px;max-width:440px;margin-left:auto;margin-right:auto}
+form.card{display:flex;flex-direction:column;gap:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;font-family:inherit;font-size:15px;color:var(--text);
+  background:var(--bg);border:1px solid transparent;border-radius:12px;
+  padding:11px 14px;appearance:none;-webkit-appearance:none;
+  transition:border-color .15s ease, background .15s ease;
+}
+.field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%2386868B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;
+}
+.field textarea{min-height:100px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;background:var(--card);border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,113,227,.15);
+}
+.field ::placeholder{color:var(--text-3)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.btn{
+  font-family:inherit;font-size:15.5px;font-weight:600;
+  background:var(--blue);color:#fff;border:none;cursor:pointer;
+  padding:13px;border-radius:100px;margin-top:4px;width:100%;
+  transition:background .12s ease, transform .08s ease;
+}
+.btn:hover{background:var(--blue-press)}
+.btn:active{transform:scale(.985)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.btn.quiet{
+  background:transparent;color:var(--red);font-weight:500;font-size:14px;
+  margin-top:2px;
+}
+.btn.quiet:hover{background:rgba(255,59,48,.06)}
+.form-status{font-size:13.5px;font-weight:500;text-align:center;min-height:1.2em}
+.form-status.ok{color:var(--green)}
+.form-status.err{color:var(--red)}
+
+/* ---------- profile sheet ---------- */
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;
+  display:none;align-items:flex-end;justify-content:center;
+}
+.sheet-backdrop.open{display:flex}
+.sheet{
+  background:var(--card);border-radius:22px 22px 0 0;
+  width:100%;max-width:520px;padding:28px 24px 36px;
+  animation:sheetUp .28s cubic-bezier(.32,.72,.35,1);
+}
+@keyframes sheetUp{from{transform:translateY(40%)}to{transform:none}}
+.sheet h3{font-size:20px;font-weight:700;letter-spacing:-.02em;text-align:center}
+.sheet p{font-size:14px;color:var(--text-2);text-align:center;margin:6px 0 18px}
+.sheet .field{margin-bottom:12px}
+
+/* ---------- drill bank ---------- */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:600;color:var(--text);
+  background:var(--card);border:1px solid var(--line);
+  padding:5px 12px;border-radius:100px;margin-right:10px;
+  cursor:pointer;transition:background .12s ease;
+}
+.chip:hover{background:rgba(0,0,0,.03)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.chip.low .dot{background:#FF9F0A}
+.chip.empty .dot{background:var(--red)}
+.bank-card{
+  display:flex;align-items:center;gap:16px;margin-bottom:16px;
+}
+.bank-num{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+  font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1;
+  min-width:64px;text-align:center;
+}
+.bank-num.empty{color:var(--red)}
+.bank-copy{flex:1}
+.bank-copy h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.bank-copy p{font-size:13.5px;color:var(--text-2);margin-top:2px}
+.bank-buy{
+  flex:none;font-family:inherit;font-size:13.5px;font-weight:600;
+  color:var(--blue);background:rgba(0,113,227,.08);
+  border:none;border-radius:100px;padding:8px 16px;cursor:pointer;
+  transition:background .12s ease;
+}
+.bank-buy:hover{background:rgba(0,113,227,.14)}
+.pack{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 16px;border:1px solid var(--line);border-radius:14px;
+  margin-bottom:10px;
+}
+.pack b{font-size:15px;letter-spacing:-.01em}
+.pack span{font-size:13px;color:var(--text-2)}
+.pack .price{font-size:15px;font-weight:600;color:var(--text)}
+.sheet .btn.link{
+  display:flex;align-items:center;justify-content:center;text-decoration:none;
+}
+
+/* ---------- calendar ---------- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-head h3{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.cal-nav{display:flex;gap:8px}
+.cal-nav button{
+  width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(0,0,0,.05);color:var(--text);font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s ease;
+}
+.cal-nav button:hover{background:rgba(0,0,0,.09)}
+.cal-nav button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.cal-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
+  text-align:center;
+}
+.cal-dow{font-size:11px;font-weight:600;color:var(--text-3);padding:6px 0;text-transform:uppercase;letter-spacing:.04em}
+.cal-day{
+  position:relative;aspect-ratio:1;border:none;background:transparent;cursor:pointer;
+  font-family:inherit;font-size:14px;color:var(--text);border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:background .12s ease;max-height:52px;
+}
+.cal-day:hover{background:rgba(0,0,0,.04)}
+.cal-day.other{color:var(--text-3);opacity:.45}
+.cal-day.today{background:var(--text);color:#fff;font-weight:600}
+.cal-day.selected:not(.today){background:rgba(0,113,227,.12);color:var(--blue);font-weight:600}
+.cal-day:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.cal-dots{display:flex;gap:3px;height:5px}
+.cal-dots i{width:5px;height:5px;border-radius:50%;display:block}
+.dot-session{background:var(--blue)}
+.dot-tournament{background:#AF52DE}
+.dot-deadline{background:#FF9F0A}
+.cal-day.today .cal-dots i{background:#fff}
+.cal-legend{
+  display:flex;gap:16px;justify-content:center;margin-top:12px;
+  font-size:12px;color:var(--text-2);
+}
+.cal-legend span{display:flex;align-items:center;gap:5px}
+.cal-legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+.agenda{margin-top:16px}
+.agenda-title{font-size:15px;font-weight:600;letter-spacing:-.01em;margin:0 4px 10px;color:var(--text-2)}
+.event{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  padding:14px 18px;margin-bottom:10px;
+}
+.event-date{
+  flex:none;width:46px;text-align:center;padding-top:2px;
+}
+.event-date .mo{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red)}
+.event-date .dy{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.event-body{flex:1;min-width:0}
+.event-body h4{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.event-body p{font-size:13px;color:var(--text-2);margin-top:1px}
+.event-tag{
+  flex:none;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;margin-top:4px;
+}
+.tag-session{background:rgba(0,113,227,.1);color:var(--blue)}
+.tag-tournament{background:rgba(175,82,222,.1);color:#AF52DE}
+.tag-deadline{background:rgba(255,159,10,.12);color:#C77700}
+.no-events{padding:20px;text-align:center;color:var(--text-2);font-size:14px}
+
+footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
+
+@media (max-width:560px){
+  .row{grid-template-columns:1fr}
+  .hero{padding-top:32px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-mark">DR</div>
+    <h1>Sign in to Drill Room</h1>
+    <p class="sub">Your drills, requests, and files — tied to your email so you never miss an update.</p>
+    <div class="field">
+      <label for="liName">Full name</label>
+      <input type="text" id="liName" placeholder="Sebastian Alvarez" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="liEmail">Email</label>
+      <input type="email" id="liEmail" placeholder="you@school.edu" autocomplete="email">
+    </div>
+    <div class="field">
+      <label for="liCode">Credit code <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
+      <input type="text" id="liCode" placeholder="FALCON-07" autocomplete="off" autocapitalize="characters">
+    </div>
+    <label class="optin">
+      <input type="checkbox" id="liUpdates" checked>
+      <span>Email me updates — new drills, file drops, and feedback when it's ready.</span>
+    </label>
+    <p class="login-err" id="liErr"></p>
+    <button class="btn" id="liSubmit">Continue</button>
+    <p class="login-foot">Signing in registers your email with your coach. Your progress saves on this device.</p>
+  </div>
+  <p class="login-brand">Watkins Debate</p>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hidden">
+
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="logo">Drill Room <span>· Watkins Debate</span></div>
+    <div style="display:flex;align-items:center">
+      <button class="chip" id="bankChip" title="Drill credits" aria-label="Your drill credits"><span class="dot"></span><span id="bankChipNum">—</span></button>
+      <button class="avatar" id="avatarBtn" title="Account" aria-label="Account settings">?</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap hero">
+  <h1 id="greeting">Welcome.</h1>
+  <p>Your drills, requests, and files — all in one place.</p>
+  <span class="week" id="weekLabel"></span>
+</div>
+
+<div class="tabs-outer">
+  <div class="wrap">
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" aria-selected="true" data-panel="panel-drills" id="tab-drills">Drills</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="panel-request" id="tab-request">Request</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="panel-files" id="tab-files">Files</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="panel-schedule" id="tab-schedule">Schedule</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- DRILLS -->
+  <section class="panel active" id="panel-drills" role="tabpanel" aria-labelledby="tab-drills">
+    <div class="card progress-card">
+      <div class="ring">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="track" cx="32" cy="32" r="27" fill="none" stroke-width="6"/>
+          <circle class="fill" id="ringFill" cx="32" cy="32" r="27" fill="none" stroke-width="6"
+                  stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+        </svg>
+        <div class="pct" id="ringPct">0%</div>
+      </div>
+      <div class="progress-copy">
+        <h3 id="progressTitle">This week's drills</h3>
+        <p id="progressSub">Tap a drill to mark it done. Progress saves automatically.</p>
+      </div>
+    </div>
+    <div class="drill-group" id="drillList"></div>
+  </section>
+
+  <!-- REQUEST A DRILL -->
+  <section class="panel" id="panel-request" role="tabpanel" aria-labelledby="tab-request">
+    <div class="form-intro">
+      <h2>Request a drill.</h2>
+      <p>Tell me what you want reps on, and I'll build a drill around it. Each request uses one drill credit.</p>
+    </div>
+    <div class="card bank-card">
+      <div class="bank-num" id="bankNum">0</div>
+      <div class="bank-copy">
+        <h3 id="bankTitle">Drill credits</h3>
+        <p id="bankSub">Each custom drill uses one credit.</p>
+      </div>
+      <button class="bank-buy" id="bankBuyBtn">Buy More</button>
+    </div>
+    <form class="card" id="drillRequestForm">
+      <div class="row">
+        <div class="field">
+          <label for="drEvent">Event</label>
+          <select id="drEvent" name="event">
+            <option>LD</option>
+            <option>CX / Policy</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="drWhen">Needed by</label>
+          <input type="text" id="drWhen" name="needed_by" placeholder="Before Grapevine">
+        </div>
+      </div>
+      <div class="field">
+        <label for="drSkill">Skill area</label>
+        <select id="drSkill" name="skill_area">
+          <option>Rebuttal redos</option>
+          <option>Speed / spreading</option>
+          <option>Cross-ex</option>
+          <option>Framework / phil</option>
+          <option>K debate</option>
+          <option>Theory / T</option>
+          <option>Case writing</option>
+          <option>Flowing</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="drDetails">What do you want to work on?</label>
+        <textarea id="drDetails" name="details" required placeholder="My 1AR collapses badly when I'm behind on case — I want reps on strategic collapse under time pressure."></textarea>
+      </div>
+      <button class="btn" type="submit">Send Request</button>
+      <p class="form-status" id="drStatus" role="status"></p>
+    </form>
+  </section>
+
+  <!-- FILES & REVIEWS -->
+  <section class="panel" id="panel-files" role="tabpanel" aria-labelledby="tab-files">
+    <div class="form-intro">
+      <h2>Files &amp; reviews.</h2>
+      <p>Need a file cut, or want feedback on something you wrote? Paste a share link below.</p>
+    </div>
+    <form class="card" id="fileRequestForm">
+      <div class="field">
+        <label for="frType">Type</label>
+        <select id="frType" name="request_type">
+          <option>File request — cut me something</option>
+          <option>Review my case / blocks</option>
+          <option>Review my speech doc</option>
+          <option>Redo feedback</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="frTopic">Topic, side, or position</label>
+        <input type="text" id="frTopic" name="topic" placeholder="Neg — Kant NC vs util affs">
+      </div>
+      <div class="field">
+        <label for="frLink">Doc or recording link</label>
+        <input type="url" id="frLink" name="link" placeholder="Google Doc or Drive share link">
+      </div>
+      <div class="field">
+        <label for="frNotes">Notes</label>
+        <textarea id="frNotes" name="notes" placeholder="What you want out of this — specific args, round context, deadline."></textarea>
+      </div>
+      <button class="btn" type="submit">Send Request</button>
+      <p class="form-status" id="frStatus" role="status"></p>
+    </form>
+  <!-- SCHEDULE -->
+  <section class="panel" id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule">
+    <div class="card">
+      <div class="cal-head">
+        <h3 id="calMonthLabel"></h3>
+        <div class="cal-nav">
+          <button id="calPrev" aria-label="Previous month">‹</button>
+          <button id="calNext" aria-label="Next month">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <span><i class="dot-session"></i>Session</span>
+        <span><i class="dot-tournament"></i>Tournament</span>
+        <span><i class="dot-deadline"></i>Deadline</span>
+      </div>
+    </div>
+    <div class="agenda">
+      <p class="agenda-title" id="agendaTitle">Upcoming</p>
+      <div id="agendaList"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="footerText"></footer>
+</div><!-- /app -->
+
+<!-- profile sheet -->
+<div class="sheet-backdrop" id="sheetBackdrop">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h3 id="sheetTitle">Account</h3>
+    <p>Update your details, or sign out on shared computers.</p>
+    <div class="field">
+      <label for="shName">Full name</label>
+      <input type="text" id="shName" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="shEmail">Email</label>
+      <input type="email" id="shEmail" autocomplete="email">
+    </div>
+    <div class="field">
+      <label for="shCode">Credit code</label>
+      <input type="text" id="shCode" placeholder="FALCON-07" autocomplete="off" autocapitalize="characters">
+    </div>
+    <label class="optin">
+      <input type="checkbox" id="shUpdates">
+      <span>Email me updates about new drills and files.</span>
+    </label>
+    <button class="btn" id="shSave">Save</button>
+    <button class="btn quiet" id="shSignOut">Sign Out</button>
+  </div>
+</div>
+
+<!-- purchase sheet -->
+<div class="sheet-backdrop" id="buyBackdrop">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="buyTitle">
+    <h3 id="buyTitle">Get more drill credits.</h3>
+    <p id="buySub">You're out of credits. Grab a pack to keep requesting custom drills.</p>
+    <div id="packList"></div>
+    <a class="btn link" id="buyPayBtn" href="#" target="_blank" rel="noopener">Purchase</a>
+    <button class="btn quiet" id="buyEmailBtn" style="color:var(--blue)">Or email your coach</button>
+    <p class="login-foot">Credits are added by your coach once payment is confirmed — usually same day.</p>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   ================  COACH CONFIG — EDIT THIS BLOCK  ================
+   ================================================================== */
+
+// 1) Your email — used for the mailto fallback and footer.
+const COACH_EMAIL = "you@nwatkins.org";
+
+// 2) Formspree endpoint. Sign up free at https://formspree.io, create a
+//    form, paste its endpoint, e.g. "https://formspree.io/f/abcdwxyz".
+//    With this set: sign-ups land silently in your inbox (building your
+//    email roster), and requests arrive with reply-to set to the student.
+//    Leave "" to fall back to opening the student's email app instead.
+const FORMSPREE_ENDPOINT = "";
+
+// 3) Week label shown under the greeting.
+const WEEK_LABEL = "Week of July 13";
+
+/* ---------------- DRILL BANK ----------------
+   PRIVACY NOTE: this file is public if your repo is public, so the
+   bank is keyed by CODES, not student emails or names. Hand each
+   student their code privately (text/email). They enter it once at
+   sign-in (or later under Account) and their balance appears.
+   When someone buys a pack, bump their number here and redeploy.
+   Every request email shows the code used and remaining balance so
+   you can audit and true-up. Codes are case-insensitive.          */
+const DRILL_BANK = {
+  "FALCON-07": 20,
+  "RIVER-22": 5,
+  "SUMMIT-14": 12
+};
+
+/* ---------------- SCHEDULE ----------------
+   Events shown on the Schedule tab. type is one of:
+   "session" (blue), "tournament" (purple), "deadline" (orange).
+   Dates are YYYY-MM-DD. time and note are optional.            */
+const EVENTS = [
+  { date: "2026-07-16", time: "6:00 PM",  title: "Practice round — LD",        type: "session",    note: "Zoom link in email. Bring your flows." },
+  { date: "2026-07-18", time: "11:00 AM", title: "Drill review session",       type: "session",    note: "We'll go over this week's redos." },
+  { date: "2026-07-20",                    title: "Case outline due",           type: "deadline",   note: "Submit via Files tab before midnight." },
+  { date: "2026-07-25",                    title: "Grapevine RR",               type: "tournament", note: "Prep meeting the Thursday before." },
+  { date: "2026-08-01", time: "6:00 PM",  title: "Practice round — CX",        type: "session" }
+];
+
+// Where the Purchase button points — Stripe payment link, Venmo,
+// PayPal.me, etc. Example: "https://venmo.com/u/yourhandle"
+const PURCHASE_URL = "https://venmo.com/u/your-handle";
+
+// Packs shown in the purchase sheet (display only — edit freely).
+const PACKS = [
+  { credits: 5,  price: "$40",  note: "$8 per drill" },
+  { credits: 12, price: "$84",  note: "$7 per drill" },
+  { credits: 25, price: "$150", note: "$6 per drill — best value" }
+];
+
+// 4) This week's drills. Add, remove, reorder freely.
+//    Changing an id resets everyone's checkmark for that drill,
+//    so bump ids weekly (w1- → w2-) to reset the board.
+const DRILLS = [
+  {
+    id: "w1-rebuttal-redo",
+    title: "2NR redo × 3",
+    desc: "Re-give your last practice-round 2NR three times. Third rep must finish 30 seconds under time.",
+    time: "45 min"
+  },
+  {
+    id: "w1-flow-drill",
+    title: "Flow one elim round",
+    desc: "Flow a recorded TOC elim on paper, all speeches. Photograph your flow for our next session.",
+    time: "60 min"
+  },
+  {
+    id: "w1-cx-script",
+    title: "Script 5 CX questions",
+    desc: "Pick your worst matchup and write five cross-ex questions that set up your best offense.",
+    time: "20 min"
+  },
+  {
+    id: "w1-speaking",
+    title: "Pen drill + backwards reading",
+    desc: "10 minutes pen drill, then read one card backwards for clarity. Record it and listen back.",
+    time: "15 min"
+  }
+];
+
+/* ==================================================================
+   ==============  APP CODE — no need to edit below  ================
+   ================================================================== */
+
+// safe storage (in-memory fallback where localStorage is blocked)
+const mem = {};
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return (k in mem) ? mem[k] : null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
+  del(k){ try { localStorage.removeItem(k); } catch(e){ delete mem[k]; } }
+};
+
+function getProfile(){
+  try { return JSON.parse(store.get("drillroom_profile") || "null"); }
+  catch(e){ return null; }
+}
+function setProfile(p){ store.set("drillroom_profile", JSON.stringify(p)); }
+
+const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+// ---------- login ----------
+const loginScreen = document.getElementById("loginScreen");
+const app = document.getElementById("app");
+
+document.getElementById("liSubmit").addEventListener("click", async ()=>{
+  const name = document.getElementById("liName").value.trim();
+  const email = document.getElementById("liEmail").value.trim();
+  const code = document.getElementById("liCode").value.trim().toUpperCase();
+  const updates = document.getElementById("liUpdates").checked;
+  const err = document.getElementById("liErr");
+
+  if (!name){ err.textContent = "Enter your name."; return; }
+  if (!validEmail(email)){ err.textContent = "Enter a valid email address."; return; }
+  if (code && !(code in DRILL_BANK)){ err.textContent = "That credit code isn't recognized — check with your coach, or leave it blank for now."; return; }
+  err.textContent = "";
+
+  setProfile({ name, email, code, updates });
+
+  // Register the sign-up with the coach (silent if Formspree is set).
+  if (FORMSPREE_ENDPOINT){
+    try {
+      await fetch(FORMSPREE_ENDPOINT, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({
+          _subject: `[Drill Room Sign-up] ${name}`,
+          _replyto: email,
+          form: "signup",
+          name, email,
+          credit_code: code || "none",
+          wants_email_updates: updates ? "yes" : "no"
+        })
+      });
+    } catch(e){ /* non-blocking */ }
+  }
+
+  enterApp();
+});
+["liName","liEmail","liCode"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown", e=>{
+    if (e.key==="Enter") document.getElementById("liSubmit").click();
+  });
+});
+
+function enterApp(){
+  loginScreen.classList.add("hidden");
+  app.classList.remove("hidden");
+  applyProfile();
+}
+
+// ---------- profile / greeting ----------
+function applyProfile(){
+  const p = getProfile(); if (!p) return;
+  document.getElementById("greeting").textContent = `Hi, ${p.name.split(" ")[0]}.`;
+  document.getElementById("avatarBtn").textContent = p.name.trim()[0].toUpperCase();
+  renderDrills();
+  renderBank();
+}
+
+// ---------- account sheet ----------
+const backdrop = document.getElementById("sheetBackdrop");
+document.getElementById("avatarBtn").addEventListener("click", ()=>{
+  const p = getProfile() || {name:"",email:"",code:"",updates:true};
+  document.getElementById("shName").value = p.name;
+  document.getElementById("shEmail").value = p.email;
+  document.getElementById("shCode").value = p.code || "";
+  document.getElementById("shUpdates").checked = !!p.updates;
+  backdrop.classList.add("open");
+});
+document.getElementById("shSave").addEventListener("click", ()=>{
+  const name = document.getElementById("shName").value.trim();
+  const email = document.getElementById("shEmail").value.trim();
+  const code = document.getElementById("shCode").value.trim().toUpperCase();
+  if (!name || !validEmail(email)) return;
+  setProfile({ name, email, code, updates: document.getElementById("shUpdates").checked });
+  backdrop.classList.remove("open");
+  applyProfile();
+});
+document.getElementById("shSignOut").addEventListener("click", ()=>{
+  store.del("drillroom_profile");
+  backdrop.classList.remove("open");
+  app.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+  document.getElementById("liName").value = "";
+  document.getElementById("liEmail").value = "";
+});
+backdrop.addEventListener("click", e=>{ if (e.target===backdrop) backdrop.classList.remove("open"); });
+
+// ---------- tabs ----------
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=> t.setAttribute("aria-selected","false"));
+    document.querySelectorAll(".panel").forEach(p=> p.classList.remove("active"));
+    tab.setAttribute("aria-selected","true");
+    document.getElementById(tab.dataset.panel).classList.add("active");
+  });
+});
+
+// ---------- labels ----------
+document.getElementById("weekLabel").textContent = WEEK_LABEL;
+document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_EMAIL}`;
+
+// ---------- drill bank ----------
+function bankCode(){
+  const p = getProfile();
+  return ((p && p.code) || "").toUpperCase();
+}
+function bankGranted(){
+  return DRILL_BANK[bankCode()] || 0;
+}
+// Local "used" counter is keyed to code + granted amount, so when
+// the coach updates a code's number in DRILL_BANK, usage resets to
+// match the new ledger entry.
+function usedKey(){
+  return `drillroom_used_${bankCode() || "none"}_${bankGranted()}`;
+}
+function bankBalance(){
+  return Math.max(0, bankGranted() - parseInt(store.get(usedKey()) || "0", 10));
+}
+function bankUseOne(){
+  store.set(usedKey(), String(parseInt(store.get(usedKey()) || "0", 10) + 1));
+  renderBank();
+}
+
+function renderBank(){
+  const bal = bankBalance();
+  // topbar chip
+  const chip = document.getElementById("bankChip");
+  document.getElementById("bankChipNum").textContent =
+    bal === 1 ? "1 credit" : `${bal} credits`;
+  chip.className = "chip" + (bal === 0 ? " empty" : bal <= 3 ? " low" : "");
+  // request tab card
+  const num = document.getElementById("bankNum");
+  num.textContent = bal;
+  num.className = "bank-num" + (bal === 0 ? " empty" : "");
+  document.getElementById("bankTitle").textContent =
+    !bankCode() ? "No credit code yet"
+    : bal === 0 ? "You're out of credits" : "Drill credits";
+  document.getElementById("bankSub").textContent =
+    !bankCode() ? "Add the code your coach gave you under Account (top right) to see your balance."
+    : bal === 0 ? "Grab a pack to keep requesting custom drills."
+    : bal <= 3 ? `Each custom drill uses one credit — only ${bal} left.`
+    : "Each custom drill uses one credit.";
+  // gate the request button
+  const btn = document.querySelector("#drillRequestForm .btn");
+  btn.textContent = bal === 0 ? "Get Credits to Request" : "Send Request · Uses 1 Credit";
+}
+
+// purchase sheet
+const buyBackdrop = document.getElementById("buyBackdrop");
+function openBuySheet(){
+  const list = document.getElementById("packList");
+  list.innerHTML = "";
+  PACKS.forEach(pk=>{
+    const row = document.createElement("div");
+    row.className = "pack";
+    row.innerHTML = `<div><b>${pk.credits} drills</b><br><span>${pk.note||""}</span></div><div class="price">${pk.price}</div>`;
+    list.appendChild(row);
+  });
+  document.getElementById("buyPayBtn").href = PURCHASE_URL;
+  document.getElementById("buySub").textContent = bankBalance() === 0
+    ? "You're out of credits. Grab a pack to keep requesting custom drills."
+    : "Top up anytime — credits never expire.";
+  buyBackdrop.classList.add("open");
+}
+document.getElementById("bankBuyBtn").addEventListener("click", openBuySheet);
+document.getElementById("bankChip").addEventListener("click", openBuySheet);
+document.getElementById("buyEmailBtn").addEventListener("click", ()=>{
+  const p = getProfile() || {name:""};
+  location.href = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent("[Drill Credits] " + p.name)}&body=${encodeURIComponent("Hi Coach — I'd like to buy more drill credits. Which pack works best for me?")}`;
+});
+buyBackdrop.addEventListener("click", e=>{ if (e.target===buyBackdrop) buyBackdrop.classList.remove("open"); });
+
+// ---------- drills ----------
+function storageKey(id){
+  const p = getProfile();
+  const who = ((p && p.email) || "anon").toLowerCase();
+  return `drillroom_done_${who}_${id}`;
+}
+
+function renderDrills(){
+  const list = document.getElementById("drillList");
+  list.innerHTML = "";
+  if (!DRILLS.length){
+    list.innerHTML = '<p class="empty-note">No drills posted this week. Check back soon, or request one.</p>';
+    updateProgress(); return;
+  }
+  DRILLS.forEach(d=>{
+    const done = store.get(storageKey(d.id)) === "1";
+    const row = document.createElement("div");
+    row.className = "drill" + (done ? " done" : "");
+    row.setAttribute("role","checkbox");
+    row.setAttribute("aria-checked", done);
+    row.setAttribute("tabindex","0");
+    row.innerHTML = `
+      <div class="check" aria-hidden="true">
+        <svg width="13" height="13" viewBox="0 0 13 13"><path d="M2 7l3 3 6-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="drill-body">
+        <div class="drill-title">${d.title}</div>
+        <div class="drill-desc">${d.desc}</div>
+      </div>
+      <div class="drill-time">${d.time || ""}</div>`;
+    const toggle = ()=>{
+      const nowDone = !(store.get(storageKey(d.id)) === "1");
+      store.set(storageKey(d.id), nowDone ? "1" : "0");
+      row.classList.toggle("done", nowDone);
+      row.setAttribute("aria-checked", nowDone);
+      updateProgress();
+    };
+    row.addEventListener("click", toggle);
+    row.addEventListener("keydown", e=>{
+      if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); }
+    });
+    list.appendChild(row);
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  const total = DRILLS.length;
+  const done = DRILLS.filter(d=> store.get(storageKey(d.id))==="1").length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const C = 169.6;
+  document.getElementById("ringFill").style.strokeDashoffset = C - (C * pct / 100);
+  document.getElementById("ringPct").textContent = pct + "%";
+  document.getElementById("progressTitle").textContent =
+    pct === 100 && total ? "All done. Nice work." : "This week's drills";
+  document.getElementById("progressSub").textContent =
+    total ? `${done} of ${total} complete — tap a drill to mark it done.` : "Nothing assigned yet.";
+}
+
+// ---------- request forms ----------
+async function submitForm(form, statusEl, subjectPrefix, formName, usesCredit){
+  const p = getProfile() || {name:"",email:""};
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.form = formName;
+  data.name = p.name;
+  data.email = p.email;
+  if (usesCredit){
+    data.credit_code = bankCode() || "none";
+    data.credits_before_this_request = String(bankBalance());
+    data.credits_after_this_request = String(Math.max(0, bankBalance() - 1));
+  }
+  data._subject = `${subjectPrefix} — ${p.name || "unnamed"}`;
+  data._replyto = p.email;
+
+  const spend = ()=>{ if (usesCredit) bankUseOne(); };
+
+  if (FORMSPREE_ENDPOINT){
+    statusEl.textContent = "Sending…"; statusEl.className = "form-status";
+    try{
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify(data)
+      });
+      if (res.ok){
+        spend();
+        statusEl.textContent = usesCredit
+          ? `Sent. You'll hear back at ${p.email} — ${bankBalance()} credit${bankBalance()===1?"":"s"} left.`
+          : `Sent. You'll hear back at ${p.email}.`;
+        statusEl.className = "form-status ok";
+        form.reset(); return;
+      }
+      throw new Error("bad status");
+    } catch(e){
+      statusEl.textContent = "Couldn't send — opening your email app instead.";
+      statusEl.className = "form-status err";
+      openMailto(data, subjectPrefix);
+      spend();
+    }
+  } else {
+    openMailto(data, subjectPrefix);
+    spend();
+    statusEl.textContent = "Opened your email app with everything filled in — just hit send.";
+    statusEl.className = "form-status ok";
+  }
+}
+
+function openMailto(data, subjectPrefix){
+  const lines = Object.entries(data)
+    .filter(([k])=> !k.startsWith("_"))
+    .map(([k,v])=> `${k.replace(/_/g," ").toUpperCase()}: ${v}`)
+    .join("\n");
+  location.href = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent(subjectPrefix+" — "+(data.name||""))}&body=${encodeURIComponent(lines)}`;
+}
+
+document.getElementById("drillRequestForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  if (bankBalance() === 0){ openBuySheet(); return; }
+  submitForm(e.target, document.getElementById("drStatus"), "[Drill Request]", "drill_request", true);
+});
+document.getElementById("fileRequestForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  submitForm(e.target, document.getElementById("frStatus"), "[File Request]", "file_request");
+});
+
+// ---------- schedule ----------
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOW = ["S","M","T","W","T","F","S"];
+let calCursor = new Date(); calCursor.setDate(1);
+let calSelected = null; // "YYYY-MM-DD" or null = show upcoming
+
+const dstr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const eventsOn = ds => EVENTS.filter(e => e.date === ds);
+const parseLocal = ds => { const [y,m,dd] = ds.split("-").map(Number); return new Date(y, m-1, dd); };
+
+function renderCalendar(){
+  document.getElementById("calMonthLabel").textContent =
+    `${MONTHS[calCursor.getMonth()]} ${calCursor.getFullYear()}`;
+  const grid = document.getElementById("calGrid");
+  grid.innerHTML = DOW.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+
+  const first = new Date(calCursor);
+  first.setDate(1 - first.getDay()); // back to Sunday
+  const todayStr = dstr(new Date());
+
+  for (let i = 0; i < 42; i++){
+    const d = new Date(first); d.setDate(first.getDate() + i);
+    const ds = dstr(d);
+    const evs = eventsOn(ds);
+    const btn = document.createElement("button");
+    btn.className = "cal-day"
+      + (d.getMonth() !== calCursor.getMonth() ? " other" : "")
+      + (ds === todayStr ? " today" : "")
+      + (ds === calSelected ? " selected" : "");
+    btn.setAttribute("aria-label", d.toDateString() + (evs.length ? `, ${evs.length} event${evs.length>1?"s":""}` : ""));
+    btn.innerHTML = `<span>${d.getDate()}</span>
+      <span class="cal-dots">${evs.slice(0,3).map(e=>`<i class="dot-${e.type}"></i>`).join("")}</span>`;
+    btn.addEventListener("click", ()=>{
+      calSelected = (calSelected === ds) ? null : ds;
+      renderCalendar(); renderAgenda();
+    });
+    grid.appendChild(btn);
+  }
+}
+
+function renderAgenda(){
+  const list = document.getElementById("agendaList");
+  const title = document.getElementById("agendaTitle");
+  list.innerHTML = "";
+
+  let shown;
+  if (calSelected){
+    const sel = parseLocal(calSelected);
+    title.textContent = sel.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
+    shown = eventsOn(calSelected);
+    if (!shown.length){
+      list.innerHTML = '<div class="no-events">Nothing scheduled this day. Tap the date again to see everything upcoming.</div>';
+      return;
+    }
+  } else {
+    title.textContent = "Upcoming";
+    const today = dstr(new Date());
+    shown = EVENTS.filter(e => e.date >= today)
+      .sort((a,b)=> a.date.localeCompare(b.date))
+      .slice(0, 8);
+    if (!shown.length){
+      list.innerHTML = '<div class="no-events">Nothing on the calendar yet — check back soon.</div>';
+      return;
+    }
+  }
+
+  shown.forEach(e=>{
+    const d = parseLocal(e.date);
+    const row = document.createElement("div");
+    row.className = "event";
+    row.innerHTML = `
+      <div class="event-date">
+        <div class="mo">${MONTHS[d.getMonth()].slice(0,3)}</div>
+        <div class="dy">${d.getDate()}</div>
+      </div>
+      <div class="event-body">
+        <h4>${e.title}</h4>
+        <p>${[d.toLocaleDateString(undefined,{weekday:"long"}), e.time, e.note].filter(Boolean).join(" · ")}</p>
+      </div>
+      <span class="event-tag tag-${e.type}">${e.type}</span>`;
+    list.appendChild(row);
+  });
+}
+
+document.getElementById("calPrev").addEventListener("click", ()=>{
+  calCursor.setMonth(calCursor.getMonth()-1); calSelected = null;
+  renderCalendar(); renderAgenda();
+});
+document.getElementById("calNext").addEventListener("click", ()=>{
+  calCursor.setMonth(calCursor.getMonth()+1); calSelected = null;
+  renderCalendar(); renderAgenda();
+});
+renderCalendar(); renderAgenda();
+
+// ---------- init ----------
+if (getProfile()) enterApp();
+</script>
+</body>
+</html>

@@ -228,54 +228,20 @@ form.card{display:flex;flex-direction:column;gap:14px}
 .pack .price{font-size:15px;font-weight:600;color:var(--text)}
 .sheet .btn.link{display:flex;align-items:center;justify-content:center;text-decoration:none}
 
-/* ---------- booking calendar ---------- */
-.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.cal-head h3{font-size:16px;font-weight:700}
-.cal-nav{display:flex;gap:8px}
-.cal-nav button{
-  width:30px;height:30px;border:1px solid var(--line);border-radius:2px;cursor:pointer;
-  background:var(--card);color:var(--text);font-size:15px;line-height:1;
-  display:flex;align-items:center;justify-content:center;
+/* ---------- booking embed ---------- */
+.book-embed{
+  width:100%;border:1px solid var(--line);background:var(--card);
+  border-radius:2px;overflow:hidden;
 }
-.cal-nav button:hover{background:#FAFAF8}
-.cal-nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
-.cal-dow{font-size:11px;font-weight:600;color:var(--text-3);padding:6px 0;text-transform:uppercase;letter-spacing:.04em}
-.cal-day{
-  position:relative;aspect-ratio:1;border:1px solid transparent;background:transparent;cursor:default;
-  font-family:inherit;font-size:14px;color:var(--text-3);border-radius:2px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  max-height:50px;
+.book-embed iframe{display:block;width:100%;height:660px;border:0}
+.book-setup{font-size:14px;color:var(--text-2);line-height:1.6}
+.book-setup h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.book-setup ol{margin:10px 0 0 18px}
+.book-setup li{margin-bottom:5px}
+.book-setup code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;
+  background:#F0F0ED;border:1px solid var(--line);padding:1px 5px;
 }
-.cal-day.open{cursor:pointer;color:var(--text);font-weight:600;border-color:var(--line);background:var(--card)}
-.cal-day.open:hover{border-color:var(--accent)}
-.cal-day.other{opacity:.35}
-.cal-day.today{text-decoration:underline;text-underline-offset:3px}
-.cal-day.selected{background:var(--accent);border-color:var(--accent);color:#fff}
-.cal-day:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.cal-day .avail{width:5px;height:5px;background:var(--accent)}
-.cal-day.selected .avail{background:#fff}
-.tz-note{font-size:12px;color:var(--text-3);margin-top:10px}
-
-.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:12px}
-.slot{
-  font-family:inherit;font-size:14px;font-weight:600;color:var(--accent);
-  background:var(--card);border:1px solid var(--accent);border-radius:2px;
-  padding:10px 4px;cursor:pointer;
-}
-.slot:hover{background:#F0F4F8}
-.slot.selected{background:var(--accent);color:#fff}
-.slot.taken{color:var(--text-3);border-color:var(--line);text-decoration:line-through;cursor:default;background:#FAFAF8}
-.slot-empty{font-size:14px;color:var(--text-2);margin-top:12px}
-#slotDayLabel{font-size:15.5px;font-weight:700}
-.book-summary{
-  font-size:14.5px;font-weight:600;
-  border:1px solid var(--line);background:#FAFAF8;
-  padding:11px 14px;
-}
-.confirm-box h3{font-size:17px;font-weight:700;color:var(--green)}
-.confirm-box p{font-size:14px;color:var(--text-2);margin-top:4px}
-.confirm-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 
 /* ---------- upcoming events ---------- */
 .agenda{margin-top:22px}
@@ -381,55 +347,22 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
   <section class="panel" id="panel-book" role="tabpanel" aria-labelledby="tab-book">
     <div class="form-intro">
       <h2>Book a drill session</h2>
-      <p id="bookIntro">Select an available date, then choose a time.</p>
+      <p>Pick any open time. It goes straight onto both our calendars, and the
+         confirmation email lets you reschedule or cancel yourself.</p>
     </div>
 
-    <div class="card">
-      <div class="cal-head">
-        <h3 id="calMonthLabel"></h3>
-        <div class="cal-nav">
-          <button id="calPrev" aria-label="Previous month">‹</button>
-          <button id="calNext" aria-label="Next month">›</button>
-        </div>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <p class="tz-note" id="tzNote"></p>
-    </div>
+    <div class="book-embed" id="bookEmbed"></div>
 
-    <div class="card" id="slotCard">
-      <h3 id="slotDayLabel">Select a date to see available times.</h3>
-      <div class="slot-grid" id="slotGrid"></div>
-      <p class="slot-empty hidden" id="slotEmpty">No open times on this date.</p>
-    </div>
-
-    <form class="card hidden" id="bookForm">
-      <div class="book-summary" id="bookSummary"></div>
-      <div class="row">
-        <div class="field">
-          <label for="bkName">Full name</label>
-          <input type="text" id="bkName" autocomplete="name" required>
-        </div>
-        <div class="field">
-          <label for="bkEmail">Email</label>
-          <input type="email" id="bkEmail" autocomplete="email" required>
-        </div>
-      </div>
-      <div class="field">
-        <label for="bkNotes">What do you want to work on? <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
-        <textarea id="bkNotes" name="notes" placeholder="Rebuttal redos, speed drills, case review..."></textarea>
-      </div>
-      <button class="btn" type="submit" id="bkSubmit">Confirm Booking</button>
-      <p class="form-status" id="bkStatus" role="status"></p>
-    </form>
-
-    <div class="card confirm-box hidden" id="bookDone">
-      <h3>Booking confirmed.</h3>
-      <p id="bookDoneText"></p>
-      <div class="confirm-actions">
-        <a class="btn secondary link" id="gcalLink" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Add to Google Calendar</a>
-        <a class="btn secondary link" id="icsLink" download="drill-session.ics" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Download for Apple / Outlook Calendar</a>
-        <button class="btn" type="button" id="bookAgain">Book Another Session</button>
-      </div>
+    <div class="card book-setup hidden" id="bookSetup">
+      <h3>Booking isn't connected yet.</h3>
+      <p>Scheduling runs on a free Google Calendar appointment schedule, so your
+         availability lives in Google Calendar and this page follows it.</p>
+      <ol>
+        <li>In Google Calendar, click <b>Create &rarr; Appointment schedule</b>.</li>
+        <li>Set your hours, session length, and buffer between sessions, then save.</li>
+        <li>Open the schedule and click <b>Share &rarr; Copy link</b>.</li>
+        <li>Paste that link into <code>BOOKING_URL</code> near the top of this file.</li>
+      </ol>
     </div>
 
     <div class="agenda">
@@ -585,41 +518,31 @@ const FORMSPREE_ENDPOINT = "";
 const WEEK_LABEL = "Week of July 13";
 
 /* ---------------- BOOKING ----------------
-   Acuity-style scheduling. YOU define when you're available below;
-   students can only pick from those times. Slots already booked
-   disappear for everyone once the Apps Script backend is connected.
+   Scheduling runs on a Google Calendar appointment schedule, so your
+   availability lives in Google Calendar itself. Change your hours there
+   and this page follows immediately, with no redeploy.
 
-   scriptUrl: paste your Google Apps Script web-app URL here (see
-   booking-backend.gs + README for the 5-minute setup). Once set,
-   every booking is AUTOMATICALLY created on your Google Calendar,
-   the student is invited by email, and taken slots are hidden for
-   all students. Leave "" and bookings arrive by email/Formspree
-   instead, for you to add manually.
+   Setup (free, about three minutes):
+     1. Google Calendar -> Create -> Appointment schedule.
+     2. Set your hours, session length, and buffer between sessions.
+     3. Open the schedule -> Share -> Copy link.
+     4. Paste that link below.
 
-   weekly: your recurring availability. Keys are days of the week
-   (0=Sun, 1=Mon ... 6=Sat); values are session START times, 24-hour
-   "HH:MM". Example below = Mon/Wed evenings + Saturday morning.
-   extra:   one-off extra availability on specific dates.
-   blocked: dates where you're unavailable (overrides weekly).      */
-const BOOKING = {
-  scriptUrl: "",
-  slotMinutes: 60,          // session length
-  daysAhead: 30,            // how far out students can book
-  minNoticeHours: 12,       // no last-minute bookings
-  timezone: "America/Chicago",       // your timezone — all times below are in it
-  timezoneLabel: "Central Time (US)",// how that's shown to students
-  weekly: {
-    1: ["16:00","17:00","18:00"],
-    3: ["16:00","17:00","18:00"],
-    6: ["10:00","11:00","13:00"]
-  },
-  extra: {
-    // "2026-08-30": ["13:00","14:00"]
-  },
-  blocked: [
-    // "2026-09-01"
-  ]
-};
+   Google handles timezones, DST, reminder emails, and lets students
+   reschedule or cancel on their own.                                */
+const BOOKING_URL = "";
+
+/* ---------------- LIVE CONTENT (Google Sheet) ----------------
+   Paste the Apps Script web-app URL from sheet-backend.gs here and the
+   drills, events, and credit balances stop being hard-coded below. They
+   are read from your Google Sheet instead, so editing the Sheet is all
+   it takes for students to see the change on their next load.
+
+   This also moves credits server-side, so a student can no longer reset
+   their own balance by clearing their browser, and the codes stop being
+   readable in this file's source.
+   Leave "" to use the hard-coded lists below.                       */
+const SHEET_API = "";
 
 /* ---------------- DRILL BANK ----------------
    PRIVACY NOTE: this file is public if your repo is public, so the
@@ -629,7 +552,8 @@ const BOOKING = {
    When someone buys a pack, bump their number here and redeploy.
    Every request email shows the code used and remaining balance so
    you can audit and true-up. Codes are case-insensitive.          */
-const DRILL_BANK = {
+// Ignored once SHEET_API is set — the Sheet becomes the only ledger.
+let DRILL_BANK = {
   "FALCON-07": 20,
   "RIVER-22": 5,
   "SUMMIT-14": 12
@@ -638,7 +562,7 @@ const DRILL_BANK = {
 /* ---------------- EVENTS ----------------
    Shown in the "Upcoming" list under the booking calendar. type is
    "session" | "tournament" | "deadline". Dates are YYYY-MM-DD.    */
-const EVENTS = [
+let EVENTS = [
   { date: "2026-07-16", time: "6:00 PM",  title: "Practice round — LD",        type: "session",    note: "Zoom link in email. Bring your flows." },
   { date: "2026-07-18", time: "11:00 AM", title: "Drill review session",       type: "session",    note: "We'll go over this week's redos." },
   { date: "2026-07-20",                    title: "Case outline due",           type: "deadline",   note: "Submit via Files tab before midnight." },
@@ -660,7 +584,7 @@ const PACKS = [
 // 4) This week's drills. Add, remove, reorder freely.
 //    Changing an id resets everyone's checkmark for that drill,
 //    so bump ids weekly (w1- → w2-) to reset the board.
-const DRILLS = [
+let DRILLS = [
   {
     id: "w1-rebuttal-redo",
     title: "2NR redo × 3",
@@ -763,7 +687,7 @@ function applyProfile(){
   document.getElementById("greeting").textContent = `Hi, ${p.name.split(" ")[0]}.`;
   document.getElementById("avatarBtn").textContent = p.name.trim()[0].toUpperCase();
   renderDrills();
-  renderBank();
+  loadCredits();
 }
 
 // ---------- account sheet ----------
@@ -808,10 +732,15 @@ document.querySelectorAll(".tab").forEach(tab=>{
 // ---------- labels ----------
 document.getElementById("weekLabel").textContent = WEEK_LABEL;
 document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_EMAIL}`;
-document.getElementById("tzNote").textContent = `All times ${BOOKING.timezoneLabel}. Sessions are ${BOOKING.slotMinutes} minutes.`;
-document.getElementById("bookIntro").textContent = `Select an available date, then choose a time. Sessions are ${BOOKING.slotMinutes} minutes.`;
+
 
 // ---------- drill bank ----------
+// With SHEET_API set, balances come from your Google Sheet and spending a
+// credit is recorded server-side. Without it we fall back to the hard-coded
+// DRILL_BANK plus a local counter (honor-system; resets if storage clears).
+let credits = null;   // {granted, used} from the sheet, or null in local mode
+let creditsOffline = false;  // sheet configured but unreachable
+
 function bankCode(){
   const p = getProfile();
   return ((p && p.code) || "").toUpperCase();
@@ -819,18 +748,45 @@ function bankCode(){
 function bankGranted(){
   return DRILL_BANK[bankCode()] || 0;
 }
-// Local "used" counter is keyed to code + granted amount, so when
-// the coach updates a code's number in DRILL_BANK, usage resets to
-// match the new ledger entry.
 function usedKey(){
   return `drillroom_used_${bankCode() || "none"}_${bankGranted()}`;
 }
 function bankBalance(){
+  if (credits) return Math.max(0, credits.granted - credits.used);
+  if (creditsOffline) return 0;   // don't hand out credits we can't verify
   return Math.max(0, bankGranted() - parseInt(store.get(usedKey()) || "0", 10));
 }
-function bankUseOne(){
+
+async function loadCredits(){
+  credits = null; creditsOffline = false;
+  const code = bankCode();
+  if (!SHEET_API || !code){ renderBank(); return; }
+  try{
+    const res = await fetch(`${SHEET_API}?code=${encodeURIComponent(code)}`);
+    const j = await res.json();
+    if (j.found) credits = { granted: j.granted, used: j.used };
+  } catch(e){ creditsOffline = true; }
+  renderBank();
+}
+
+// Records one spent credit. Resolves true only if it was actually recorded.
+async function spendCredit(){
+  if (SHEET_API){
+    if (!credits) return false;
+    try{
+      const res = await fetch(SHEET_API, {
+        method:"POST", headers:{ "Content-Type":"text/plain" },
+        body: JSON.stringify({ action:"spend", code: bankCode() })
+      });
+      const j = await res.json();
+      if (j.ok){ credits.used = j.used; renderBank(); return true; }
+      if (j.error === "empty"){ credits.used = credits.granted; renderBank(); }
+      return false;
+    } catch(e){ return false; }
+  }
   store.set(usedKey(), String(parseInt(store.get(usedKey()) || "0", 10) + 1));
   renderBank();
+  return true;
 }
 
 function renderBank(){
@@ -844,11 +800,16 @@ function renderBank(){
   const num = document.getElementById("bankNum");
   num.textContent = bal;
   num.className = "bank-num" + (bal === 0 ? " empty" : "");
+  const unknownCode = SHEET_API && bankCode() && !credits && !creditsOffline;
   document.getElementById("bankTitle").textContent =
     !bankCode() ? "No credit code yet"
+    : creditsOffline ? "Can't reach your balance"
+    : unknownCode ? "Code not recognized"
     : bal === 0 ? "You're out of credits" : "Drill credits";
   document.getElementById("bankSub").textContent =
     !bankCode() ? "Add the code your coach gave you under Account (top right) to see your balance."
+    : creditsOffline ? "Something's wrong on our end. Try again in a minute, or email your coach."
+    : unknownCode ? "Check the code under Account (top right), or ask your coach for a new one."
     : bal === 0 ? "Purchase a pack to keep requesting custom drills."
     : bal <= 3 ? `Each custom drill uses one credit. ${bal} left.`
     : "Each custom drill uses one credit.";
@@ -954,7 +915,7 @@ async function submitForm(form, statusEl, subjectPrefix, formName, usesCredit){
   data._subject = `${subjectPrefix} — ${p.name || "unnamed"}`;
   data._replyto = p.email;
 
-  const spend = ()=>{ if (usesCredit) bankUseOne(); };
+  const spend = async ()=> usesCredit ? await spendCredit() : true;
 
   if (FORMSPREE_ENDPOINT){
     statusEl.textContent = "Sending…"; statusEl.className = "form-status";
@@ -965,10 +926,12 @@ async function submitForm(form, statusEl, subjectPrefix, formName, usesCredit){
         body: JSON.stringify(data)
       });
       if (res.ok){
-        spend();
-        statusEl.textContent = usesCredit
-          ? `Sent. You'll hear back at ${p.email}. ${bankBalance()} credit${bankBalance()===1?"":"s"} left.`
-          : `Sent. You'll hear back at ${p.email}.`;
+        const spent = await spend();
+        statusEl.textContent = !usesCredit
+          ? `Sent. You'll hear back at ${p.email}.`
+          : spent
+            ? `Sent. You'll hear back at ${p.email}. ${bankBalance()} credit${bankBalance()===1?"":"s"} left.`
+            : `Sent. You'll hear back at ${p.email}. Your balance couldn't be updated here, so your coach will true it up.`;
         statusEl.className = "form-status ok";
         form.reset(); return;
       }
@@ -977,11 +940,11 @@ async function submitForm(form, statusEl, subjectPrefix, formName, usesCredit){
       statusEl.textContent = "Couldn't send. Opening your email app instead.";
       statusEl.className = "form-status err";
       openMailto(data, subjectPrefix);
-      spend();
+      await spend();
     }
   } else {
     openMailto(data, subjectPrefix);
-    spend();
+    await spend();
     statusEl.textContent = "Opened your email app with everything filled in. Just hit send.";
     statusEl.className = "form-status ok";
   }
@@ -1006,332 +969,28 @@ document.getElementById("fileRequestForm").addEventListener("submit", e=>{
 });
 
 /* ==================================================================
-   ======================  BOOKING (Acuity-style)  ==================
+   ==========================  BOOKING  =============================
    ================================================================== */
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const DOW = ["S","M","T","W","T","F","S"];
-let calCursor = new Date(); calCursor.setDate(1);
-let selDate = null;   // "YYYY-MM-DD"
-let selTime = null;   // "HH:MM"
-let busy = [];        // [{start:Date, end:Date}] — times already on the coach's calendar
-
 const dstr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const parseLocal = ds => { const [y,m,dd] = ds.split("-").map(Number); return new Date(y, m-1, dd); };
-const fmtTime = t => {
-  let [h,m] = t.split(":").map(Number);
-  const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
-  return `${h}:${String(m).padStart(2,"0")} ${ap}`;
-};
-const fmtLongDate = ds =>
-  parseLocal(ds).toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
 
-/* Availability is written in YOUR timezone, but the student's browser may be
-   in another one. These two helpers convert a "YYYY-MM-DD" + "HH:MM" pair in
-   BOOKING.timezone into a real instant, so slot times, the notice window, and
-   the calendar files all line up no matter where the student is sitting. */
-function tzOffsetMs(instant, tz){
-  const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: tz, hour12:false,
-      year:"numeric", month:"2-digit", day:"2-digit",
-      hour:"2-digit", minute:"2-digit", second:"2-digit"
-    }).formatToParts(instant).map(x => [x.type, x.value])
-  );
-  const asUTC = Date.UTC(+p.year, p.month-1, +p.day, (+p.hour)%24, +p.minute, +p.second);
-  return asUTC - instant.getTime();
-}
-// Instant of a coach-timezone wall clock. Resolved twice so DST changeovers land right.
-function slotStart(ds, t){
-  const naive = Date.parse(`${ds}T${t}:00Z`);
-  let guess = new Date(naive - tzOffsetMs(new Date(naive), BOOKING.timezone));
-  return new Date(naive - tzOffsetMs(guess, BOOKING.timezone));
-}
-// If the student isn't in the coach's timezone, show their local time too.
-function localEcho(ds, t){
-  const here = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  if (!here || here === BOOKING.timezone) return "";
-  const d = slotStart(ds, t);
-  if (tzOffsetMs(d, here) === tzOffsetMs(d, BOOKING.timezone)) return "";
-  return ` · ${d.toLocaleString(undefined,{weekday:"short", hour:"numeric", minute:"2-digit"})} your time`;
-}
-
-// A slot is taken if it overlaps anything already on the coach's calendar.
-function isTaken(startDt){
-  const endDt = new Date(startDt.getTime() + BOOKING.slotMinutes * 60000);
-  return busy.some(b => b.start < endDt && b.end > startDt);
-}
-
-// All open + taken slots for a given date, respecting the notice window.
-function slotsFor(ds){
-  if (BOOKING.blocked.includes(ds)) return [];
-  const d = parseLocal(ds);
-  const times = [...new Set([...(BOOKING.weekly[d.getDay()] || []), ...(BOOKING.extra[ds] || [])])].sort();
-  const now = new Date();
-  const cutoff = new Date(now.getTime() + BOOKING.minNoticeHours * 3600e3);
-  const max = new Date(now.getTime() + BOOKING.daysAhead * 86400e3);
-  return times
-    .map(t => {
-      const dt = slotStart(ds, t);
-      if (dt < cutoff || dt > max) return null;
-      return { time: t, taken: isTaken(dt) };
-    })
-    .filter(Boolean);
-}
-const hasOpenSlots = ds => slotsFor(ds).some(s => !s.taken);
-
-function markBusy(ds, t){
-  const start = slotStart(ds, t);
-  busy.push({ start, end: new Date(start.getTime() + BOOKING.slotMinutes * 60000) });
-}
-
-// Pull the coach's existing calendar entries (via Apps Script).
-async function loadBusy(){
-  if (!BOOKING.scriptUrl) return;
-  const from = new Date();
-  const to = new Date(from.getTime() + BOOKING.daysAhead * 86400e3);
-  try{
-    const res = await fetch(`${BOOKING.scriptUrl}?from=${dstr(from)}&to=${dstr(to)}`);
-    const j = await res.json();
-    busy = (j.busy || []).map(b => ({ start: new Date(b.s), end: new Date(b.e) }));
-    renderBookCalendar(); renderSlots();
-  } catch(e){ /* availability still shows; conflicts caught at booking time */ }
-}
-
-// ---------- calendar ----------
-function renderBookCalendar(){
-  document.getElementById("calMonthLabel").textContent =
-    `${MONTHS[calCursor.getMonth()]} ${calCursor.getFullYear()}`;
-  const grid = document.getElementById("calGrid");
-  grid.innerHTML = DOW.map(d=>`<div class="cal-dow">${d}</div>`).join("");
-
-  const first = new Date(calCursor);
-  first.setDate(1 - first.getDay()); // back to Sunday
-  const todayStr = dstr(new Date());
-
-  for (let i = 0; i < 42; i++){
-    const d = new Date(first); d.setDate(first.getDate() + i);
-    const ds = dstr(d);
-    const open = hasOpenSlots(ds);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "cal-day"
-      + (open ? " open" : "")
-      + (d.getMonth() !== calCursor.getMonth() ? " other" : "")
-      + (ds === todayStr ? " today" : "")
-      + (ds === selDate ? " selected" : "");
-    btn.disabled = !open;
-    btn.setAttribute("aria-label", d.toDateString() + (open ? ", times available" : ", unavailable"));
-    btn.innerHTML = `<span>${d.getDate()}</span>` + (open ? `<span class="avail"></span>` : "");
-    if (open){
-      btn.addEventListener("click", ()=>{
-        selDate = ds; selTime = null;
-        hideBookForm();
-        renderBookCalendar(); renderSlots();
-      });
-    }
-    grid.appendChild(btn);
-  }
-}
-
-// ---------- time slots ----------
-function renderSlots(){
-  const label = document.getElementById("slotDayLabel");
-  const grid = document.getElementById("slotGrid");
-  const empty = document.getElementById("slotEmpty");
-  grid.innerHTML = "";
-  empty.classList.add("hidden");
-
-  if (!selDate){
-    label.textContent = "Select a date to see available times.";
+// Google's appointment schedule, embedded inline. Availability, timezones,
+// DST, reminder emails, rescheduling, and cancellation are all handled on
+// their side, so there is nothing to keep in sync here.
+function renderBooking(){
+  const box = document.getElementById("bookEmbed");
+  const setup = document.getElementById("bookSetup");
+  if (!BOOKING_URL){
+    box.classList.add("hidden");
+    setup.classList.remove("hidden");
     return;
   }
-  label.textContent = fmtLongDate(selDate);
-  const slots = slotsFor(selDate);
-  if (!slots.length || slots.every(s=>s.taken)){
-    empty.classList.remove("hidden");
-    if (slots.length) renderSlotButtons(grid, slots); // show struck-through taken times
-    return;
-  }
-  renderSlotButtons(grid, slots);
-}
-
-function renderSlotButtons(grid, slots){
-  slots.forEach(s=>{
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "slot" + (s.taken ? " taken" : "") + (s.time === selTime ? " selected" : "");
-    b.textContent = fmtTime(s.time);
-    b.disabled = s.taken;
-    if (!s.taken){
-      b.addEventListener("click", ()=>{
-        selTime = s.time;
-        renderSlots(); showBookForm();
-      });
-    }
-    grid.appendChild(b);
-  });
-}
-
-// ---------- booking form ----------
-const bookForm = document.getElementById("bookForm");
-const bookDone = document.getElementById("bookDone");
-
-function showBookForm(){
-  const p = getProfile() || {name:"",email:""};
-  document.getElementById("bkName").value = p.name;
-  document.getElementById("bkEmail").value = p.email;
-  document.getElementById("bookSummary").textContent =
-    `${fmtLongDate(selDate)} at ${fmtTime(selTime)} · ${BOOKING.slotMinutes} minutes${localEcho(selDate, selTime)}`;
-  document.getElementById("bkStatus").textContent = "";
-  bookDone.classList.add("hidden");
-  bookForm.classList.remove("hidden");
-  bookForm.scrollIntoView({behavior:"smooth", block:"nearest"});
-}
-function hideBookForm(){
-  bookForm.classList.add("hidden");
-  bookDone.classList.add("hidden");
-}
-
-bookForm.addEventListener("submit", async e=>{
-  e.preventDefault();
-  const name = document.getElementById("bkName").value.trim();
-  const email = document.getElementById("bkEmail").value.trim();
-  const notes = document.getElementById("bkNotes").value.trim();
-  const status = document.getElementById("bkStatus");
-  const submitBtn = document.getElementById("bkSubmit");
-  if (!name || !validEmail(email)){
-    status.textContent = "Enter your name and a valid email.";
-    status.className = "form-status err"; return;
-  }
-
-  const payload = {
-    action: "book",
-    date: selDate, time: selTime, minutes: BOOKING.slotMinutes,
-    name, email, notes
-  };
-
-  if (BOOKING.scriptUrl){
-    submitBtn.disabled = true;
-    status.textContent = "Booking…"; status.className = "form-status";
-    try{
-      // text/plain avoids a CORS preflight, which Apps Script can't answer
-      const res = await fetch(BOOKING.scriptUrl, {
-        method:"POST",
-        headers:{ "Content-Type":"text/plain" },
-        body: JSON.stringify(payload)
-      });
-      const j = await res.json();
-      submitBtn.disabled = false;
-      if (j.ok){
-        confirmBooking("This session is on your coach's calendar. A calendar invitation was sent to " + email + ".");
-        return;
-      }
-      if (j.error === "taken"){
-        markBusy(selDate, selTime);
-        selTime = null;
-        hideBookForm();
-        renderBookCalendar(); renderSlots();
-        status.textContent = "";
-        document.getElementById("slotEmpty").classList.add("hidden");
-        alert("Sorry, that time was just booked by someone else. Please pick another.");
-        return;
-      }
-      throw new Error(j.error || "booking failed");
-    } catch(err){
-      submitBtn.disabled = false;
-      status.textContent = "Couldn't reach the booking system. Sending your request by email instead.";
-      status.className = "form-status err";
-      sendBookingByEmail(payload);
-      confirmBooking("Your request was sent by email. Your coach will confirm this time with you.");
-    }
-  } else {
-    sendBookingByEmail(payload);
-    confirmBooking("Your request was sent. Your coach will confirm this time with you.");
-  }
-});
-
-async function sendBookingByEmail(p){
-  if (FORMSPREE_ENDPOINT){
-    try{
-      await fetch(FORMSPREE_ENDPOINT, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
-        body: JSON.stringify({
-          _subject: `[Session Booking] ${p.name} — ${p.date} ${fmtTime(p.time)}`,
-          _replyto: p.email,
-          form: "booking",
-          name: p.name, email: p.email,
-          date: p.date, time: fmtTime(p.time),
-          length_minutes: String(p.minutes),
-          notes: p.notes || "none",
-          add_to_calendar: gcalUrl(p.date, p.time, p.name)
-        })
-      });
-      return;
-    } catch(e){ /* fall through to mailto */ }
-  }
-  const body = [
-    `SESSION BOOKING`,
-    `NAME: ${p.name}`,
-    `EMAIL: ${p.email}`,
-    `DATE: ${fmtLongDate(p.date)}`,
-    `TIME: ${fmtTime(p.time)} (${BOOKING.timezoneLabel})`,
-    `LENGTH: ${p.minutes} minutes`,
-    `NOTES: ${p.notes || "none"}`,
-    ``,
-    `Add to calendar: ${gcalUrl(p.date, p.time, p.name)}`
-  ].join("\n");
-  location.href = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent(`[Session Booking] ${p.name} — ${p.date}`)}&body=${encodeURIComponent(body)}`;
-}
-
-function confirmBooking(msg){
-  markBusy(selDate, selTime);
-  document.getElementById("gcalLink").href = gcalUrl(selDate, selTime, "Watkins Debate");
-  document.getElementById("icsLink").href = icsUrl(selDate, selTime);
-  document.getElementById("bookDoneText").textContent =
-    `${fmtLongDate(selDate)} at ${fmtTime(selTime)} ${BOOKING.timezoneLabel}${localEcho(selDate, selTime)}. ${msg}`;
-  bookForm.classList.add("hidden");
-  bookDone.classList.remove("hidden");
-  document.getElementById("bkNotes").value = "";
-  renderBookCalendar(); renderSlots();
-  bookDone.scrollIntoView({behavior:"smooth", block:"nearest"});
-}
-
-document.getElementById("bookAgain").addEventListener("click", ()=>{
-  selDate = null; selTime = null;
-  hideBookForm();
-  renderBookCalendar(); renderSlots();
-});
-
-// Calendar-file helpers for the student's own calendar. Stamps are UTC
-// (trailing Z) so the event lands at the right hour in any timezone.
-function slotStamps(ds, t){
-  const start = slotStart(ds, t);
-  const end = new Date(start.getTime() + BOOKING.slotMinutes * 60000);
-  const stamp = d => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  return [stamp(start), stamp(end)];
-}
-function gcalUrl(ds, t, who){
-  const [s, e] = slotStamps(ds, t);
-  return "https://calendar.google.com/calendar/render?action=TEMPLATE"
-    + "&text=" + encodeURIComponent("Drill session — " + who)
-    + "&dates=" + s + "/" + e
-    + "&details=" + encodeURIComponent("Booked via Drill Room.");
-}
-function icsUrl(ds, t){
-  const [s, e] = slotStamps(ds, t);
-  const body = [
-    "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Drill Room//EN",
-    "BEGIN:VEVENT",
-    "UID:" + s + "@drillroom",
-    "DTSTART:" + s,
-    "DTEND:" + e,
-    "SUMMARY:Drill session — Watkins Debate",
-    "DESCRIPTION:Booked via Drill Room.",
-    "END:VEVENT","END:VCALENDAR"
-  ].join("\r\n");
-  return "data:text/calendar;charset=utf-8," + encodeURIComponent(body);
+  setup.classList.add("hidden");
+  box.classList.remove("hidden");
+  const src = BOOKING_URL + (BOOKING_URL.includes("?") ? "&" : "?") + "gv=true";
+  box.innerHTML = `<iframe src="${src}" title="Book a drill session" loading="lazy"></iframe>`;
 }
 
 // ---------- upcoming events list ----------
@@ -1364,16 +1023,20 @@ function renderAgenda(){
   });
 }
 
-document.getElementById("calPrev").addEventListener("click", ()=>{
-  calCursor.setMonth(calCursor.getMonth()-1);
-  renderBookCalendar();
-});
-document.getElementById("calNext").addEventListener("click", ()=>{
-  calCursor.setMonth(calCursor.getMonth()+1);
-  renderBookCalendar();
-});
+// ---------- live content from the Google Sheet ----------
+async function loadContent(){
+  if (!SHEET_API) return;
+  try{
+    const res = await fetch(SHEET_API);
+    const j = await res.json();
+    if (Array.isArray(j.drills) && j.drills.length) DRILLS = j.drills;
+    if (Array.isArray(j.events)) EVENTS = j.events;
+    if (j.weekLabel) document.getElementById("weekLabel").textContent = j.weekLabel;
+    renderDrills(); renderAgenda();
+  } catch(e){ /* keep the built-in lists */ }
+}
 
-renderBookCalendar(); renderSlots(); renderAgenda(); loadBusy();
+renderBooking(); renderAgenda(); loadContent();
 
 // ---------- init ----------
 if (getProfile()) enterApp();

@@ -354,15 +354,8 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
     <div class="book-embed" id="bookEmbed"></div>
 
     <div class="card book-setup hidden" id="bookSetup">
-      <h3>Booking isn't connected yet.</h3>
-      <p>Scheduling runs on a free Google Calendar appointment schedule, so your
-         availability lives in Google Calendar and this page follows it.</p>
-      <ol>
-        <li>In Google Calendar, click <b>Create &rarr; Appointment schedule</b>.</li>
-        <li>Set your hours, session length, and buffer between sessions, then save.</li>
-        <li>Open the schedule and click <b>Share &rarr; Copy link</b>.</li>
-        <li>Paste that link into <code>BOOKING_URL</code> near the top of this file.</li>
-      </ol>
+      <h3>Booking is temporarily unavailable.</h3>
+      <p>Email <a id="bookSetupMail" href="#">your coach</a> to set up a session.</p>
     </div>
 
     <div class="agenda">
@@ -500,68 +493,23 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 </div>
 
 <script>
-/* ==================================================================
-   ================  COACH CONFIG — EDIT THIS BLOCK  ================
-   ================================================================== */
+/* ---------------- CONFIG ---------------- */
 
-// 1) Your email — used for the mailto fallback and footer.
-const COACH_EMAIL = "you@nwatkins.org";
+const COACH_EMAIL = "debate@nwatkins.org";
 
-// 2) Formspree endpoint. Sign up free at https://formspree.io, create a
-//    form, paste its endpoint, e.g. "https://formspree.io/f/abcdwxyz".
-//    With this set: sign-ups land silently in your inbox (building your
-//    email roster), and requests arrive with reply-to set to the student.
-//    Leave "" to fall back to opening the student's email app instead.
 const FORMSPREE_ENDPOINT = "";
-
-// 3) Week label shown under the greeting.
 const WEEK_LABEL = "Week of July 13";
 
-/* ---------------- BOOKING ----------------
-   Scheduling runs on a Google Calendar appointment schedule, so your
-   availability lives in Google Calendar itself. Change your hours there
-   and this page follows immediately, with no redeploy.
-
-   Setup (free, about three minutes):
-     1. Google Calendar -> Create -> Appointment schedule.
-     2. Set your hours, session length, and buffer between sessions.
-     3. Open the schedule -> Share -> Copy link.
-     4. Paste that link below.
-
-   Google handles timezones, DST, reminder emails, and lets students
-   reschedule or cancel on their own.                                */
 const BOOKING_URL = "";
 
-/* ---------------- LIVE CONTENT (Google Sheet) ----------------
-   Paste the Apps Script web-app URL from sheet-backend.gs here and the
-   drills, events, and credit balances stop being hard-coded below. They
-   are read from your Google Sheet instead, so editing the Sheet is all
-   it takes for students to see the change on their next load.
-
-   This also moves credits server-side, so a student can no longer reset
-   their own balance by clearing their browser, and the codes stop being
-   readable in this file's source.
-   Leave "" to use the hard-coded lists below.                       */
 const SHEET_API = "";
 
-/* ---------------- DRILL BANK ----------------
-   PRIVACY NOTE: this file is public if your repo is public, so the
-   bank is keyed by CODES, not student emails or names. Hand each
-   student their code privately (text/email). They enter it once at
-   sign-in (or later under Account) and their balance appears.
-   When someone buys a pack, bump their number here and redeploy.
-   Every request email shows the code used and remaining balance so
-   you can audit and true-up. Codes are case-insensitive.          */
-// Ignored once SHEET_API is set — the Sheet becomes the only ledger.
 let DRILL_BANK = {
   "FALCON-07": 20,
   "RIVER-22": 5,
   "SUMMIT-14": 12
 };
 
-/* ---------------- EVENTS ----------------
-   Shown in the "Upcoming" list under the booking calendar. type is
-   "session" | "tournament" | "deadline". Dates are YYYY-MM-DD.    */
 let EVENTS = [
   { date: "2026-07-16", time: "6:00 PM",  title: "Practice round — LD",        type: "session",    note: "Zoom link in email. Bring your flows." },
   { date: "2026-07-18", time: "11:00 AM", title: "Drill review session",       type: "session",    note: "We'll go over this week's redos." },
@@ -570,20 +518,14 @@ let EVENTS = [
   { date: "2026-08-01", time: "6:00 PM",  title: "Practice round — CX",        type: "session" }
 ];
 
-// Where the Purchase button points — Stripe payment link, Venmo,
-// PayPal.me, etc. Example: "https://venmo.com/u/yourhandle"
-const PURCHASE_URL = "https://venmo.com/u/your-handle";
+const PURCHASE_URL = "https://venmo.com/u/Nathaniel-Watkins-19";
 
-// Packs shown in the purchase sheet (display only — edit freely).
 const PACKS = [
   { credits: 5,  price: "$40",  note: "$8 per drill" },
   { credits: 12, price: "$84",  note: "$7 per drill" },
   { credits: 25, price: "$150", note: "$6 per drill" }
 ];
 
-// 4) This week's drills. Add, remove, reorder freely.
-//    Changing an id resets everyone's checkmark for that drill,
-//    so bump ids weekly (w1- → w2-) to reset the board.
 let DRILLS = [
   {
     id: "w1-rebuttal-redo",
@@ -611,9 +553,7 @@ let DRILLS = [
   }
 ];
 
-/* ==================================================================
-   ==============  APP CODE — no need to edit below  ================
-   ================================================================== */
+/* ---------------- APP ---------------- */
 
 // safe storage (in-memory fallback where localStorage is blocked)
 const mem = {};
@@ -735,11 +675,8 @@ document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_E
 
 
 // ---------- drill bank ----------
-// With SHEET_API set, balances come from your Google Sheet and spending a
-// credit is recorded server-side. Without it we fall back to the hard-coded
-// DRILL_BANK plus a local counter (honor-system; resets if storage clears).
-let credits = null;   // {granted, used} from the sheet, or null in local mode
-let creditsOffline = false;  // sheet configured but unreachable
+let credits = null;           // {granted, used} from the sheet, else null
+let creditsOffline = false;   // sheet configured but unreachable
 
 function bankCode(){
   const p = getProfile();
@@ -769,7 +706,6 @@ async function loadCredits(){
   renderBank();
 }
 
-// Records one spent credit. Resolves true only if it was actually recorded.
 async function spendCredit(){
   if (SHEET_API){
     if (!credits) return false;
@@ -968,23 +904,19 @@ document.getElementById("fileRequestForm").addEventListener("submit", e=>{
   submitForm(e.target, document.getElementById("frStatus"), "[File Request]", "file_request");
 });
 
-/* ==================================================================
-   ==========================  BOOKING  =============================
-   ================================================================== */
+// ---------- booking ----------
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const dstr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const parseLocal = ds => { const [y,m,dd] = ds.split("-").map(Number); return new Date(y, m-1, dd); };
 
-// Google's appointment schedule, embedded inline. Availability, timezones,
-// DST, reminder emails, rescheduling, and cancellation are all handled on
-// their side, so there is nothing to keep in sync here.
 function renderBooking(){
   const box = document.getElementById("bookEmbed");
   const setup = document.getElementById("bookSetup");
   if (!BOOKING_URL){
     box.classList.add("hidden");
     setup.classList.remove("hidden");
+    document.getElementById("bookSetupMail").href = "mailto:" + COACH_EMAIL;
     return;
   }
   setup.classList.add("hidden");

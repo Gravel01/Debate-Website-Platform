@@ -1,41 +1,9 @@
 /**
- * Drill Room — live content backend (Google Apps Script)
- *
- * Lets you run the site from a Google Sheet instead of editing index.html:
- * drills, upcoming events, the week label, and drill-credit balances all
- * come from the Sheet, so a weekly update is a spreadsheet edit, not a
- * commit and redeploy.
- *
- * Endpoints:
- *   GET  (no params)      → { weekLabel, drills[], events[] }
- *   GET  ?code=FALCON-07  → { found, granted, used }   one code only
- *   POST {action:"spend", code:"FALCON-07"}
- *                         → { ok:true, used } or { ok:false, error:"empty" }
- *
- * Balances are never returned in bulk, so a student can't read the whole
- * roster the way they could when DRILL_BANK lived in the page source.
- *
- * SETUP (about five minutes)
- *   1. Create a Google Sheet. Note its URL.
- *   2. Extensions → Apps Script. Delete the starter code, paste this in.
- *   3. Put your Sheet's ID in SHEET_ID below (the long string in its URL
- *      between /d/ and /edit). Or leave '' if you created the script from
- *      inside the Sheet itself.
- *   4. Run setupSheet() once from the editor toolbar. It creates the four
- *      tabs with the right headers and a sample row in each. Authorize
- *      when prompted.
- *   5. Deploy → New deployment → Web app.
- *        Execute as:     Me
- *        Who has access: Anyone
- *      Copy the /exec URL.
- *   6. Paste it into SHEET_API in index.html and redeploy the site.
- *
- * After that, edit the Sheet whenever you like. Students pick up changes
- * on their next page load.
+ * Drill Room — serves drills, events, and drill credits from a Google Sheet.
+ * Setup instructions are in README.md.
  */
 
-// Leave '' if this script lives inside the Sheet (Extensions → Apps Script).
-var SHEET_ID = '';
+var SHEET_ID = '';   // '' when the script lives inside the Sheet
 
 function doGet(e) {
   var code = e && e.parameter && e.parameter.code;
@@ -165,13 +133,8 @@ function json(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/* ---------- one-time setup ---------- */
 
-/**
- * Run this once from the Apps Script editor. Creates the four tabs with
- * headers and one sample row each. Safe to re-run: existing tabs are left
- * alone.
- */
+// Run once from the editor. Safe to re-run; existing tabs are left alone.
 function setupSheet() {
   var ss = book();
   var specs = [

@@ -9,13 +9,15 @@ var SHEET_ID = '';   // '' when the script lives inside the Sheet
 // holds even if someone guesses the URL.
 var ADMIN_DOMAIN = 'nwatkins.org';
 
+// OAuth client ID for student sign-in (Cloud Console > Credentials > OAuth
+// client > Web application). Must match the one in index.html, or every
+// token will be rejected as minted for a different site.
+var GOOGLE_CLIENT_ID = '';
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
 
   if (p.view === 'admin') return adminPage();
-
-  var code = p.code;
-  if (code) return json(lookupCredit(code));
 
   return json({
     weekLabel: readSetting('weekLabel'),
@@ -31,59 +33,17 @@ function doPost(e) {
   } catch (err) {
     return json({ ok: false, error: 'bad request' });
   }
+
+  // Every action below identifies the caller from a Google ID token the
+  // server verifies. Nothing trusts a code or an email the browser supplies.
+  if (body.action === 'me')      return json(meResponse(body.idToken));
+  if (body.action === 'spend')   return json(spendForToken(body.idToken));
   if (body.action === 'request') return json(saveRequest(body));
-  if (body.action !== 'spend') return json({ ok: false, error: 'unknown action' });
-  if (!body.code) return json({ ok: false, error: 'missing code' });
 
-  // Serialize so two tabs can't spend the same credit twice.
-  var lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(20000);
-  } catch (err) {
-    return json({ ok: false, error: 'busy, try again' });
-  }
-
-  try {
-    var sh = sheet('Credits');
-    var rows = sh.getDataRange().getValues();
-    var want = String(body.code).trim().toUpperCase();
-
-    for (var i = 1; i < rows.length; i++) {
-      if (String(rows[i][0]).trim().toUpperCase() !== want) continue;
-
-      var granted = Number(rows[i][1]) || 0;
-      var used    = Number(rows[i][2]) || 0;
-      if (granted - used <= 0) return json({ ok: false, error: 'empty' });
-
-      used += 1;
-      sh.getRange(i + 1, 3).setValue(used);          // column C = used
-      sh.getRange(i + 1, 5).setValue(new Date());    // column E = last used
-      return json({ ok: true, used: used });
-    }
-    return json({ ok: false, error: 'unknown code' });
-  } catch (err) {
-    return json({ ok: false, error: String(err) });
-  } finally {
-    lock.releaseLock();
-  }
+  return json({ ok: false, error: 'unknown action' });
 }
 
 /* ---------- readers ---------- */
-
-function lookupCredit(code) {
-  var rows = sheet('Credits').getDataRange().getValues();
-  var want = String(code).trim().toUpperCase();
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]).trim().toUpperCase() === want) {
-      return {
-        found: true,
-        granted: Number(rows[i][1]) || 0,
-        used: Number(rows[i][2]) || 0
-      };
-    }
-  }
-  return { found: false };
-}
 
 function readDrills() {
   return rowsOf('Drills').map(function (r) {
@@ -153,8 +113,9 @@ function setupSheet() {
                   '45 min']],
     ['Events',   ['date (YYYY-MM-DD)', 'time', 'title', 'type (session/tournament/deadline)', 'note'],
                  ['2026-08-24', '6:00 PM', 'Practice round - LD', 'session', 'Bring your flows.']],
-    ['Credits',  ['code', 'granted', 'used', 'student', 'last used'],
-                 ['FALCON-07', 20, 0, 'Sebastian Alvarez', '']],
+    ['Credits',  ['code', 'granted', 'used', 'student', 'last used', 'email'],
+                 ['FALCON-07', 20, 0, 'Sebastian Alvarez', '',
+                  'sebastian@example.com']],
     ['Settings', ['key', 'value'],
                  ['weekLabel', 'Week of August 17']],
     ['Requests', ['received', 'form', 'student', 'email', 'code',
@@ -196,14 +157,17 @@ function isAdmin() {
 }
 
 function saveRequest(body) {
+  var email = verifyIdToken(body.idToken);
+  if (!email) return { ok: false, error: 'signed out' };
+  var s = studentRow(email);
   var f = body.fields || {};
   try {
     sheet('Requests').appendRow([
       new Date(),
       str(f.form),
-      str(f.name),
-      str(f.email),
-      str(f.credit_code),
+      s ? s.student : str(f.name),
+      email,
+      s ? s.code : '',
       str(f.topic || f.event),
       str(f.request_type || f.skill_area),
       str(f.details || f.notes),
@@ -257,7 +221,7 @@ function adminPage() {
     if (!str(r[0])) continue;
     var granted = Number(r[1]) || 0, used = Number(r[2]) || 0;
     banks.push({
-      code: str(r[0]), student: str(r[3]) || '—',
+      code: str(r[0]), student: str(r[3]) || '—', email: str(r[5]),
       granted: granted, used: used, left: granted - used, last: fmt(r[4])
     });
   }
@@ -314,11 +278,14 @@ function adminPage() {
   if (!banks.length) {
     h.push('<p class="empty">No codes in the Credits tab yet.</p>');
   } else {
-    h.push('<table><tr><th>Student</th><th>Code</th><th>Left</th>' +
-           '<th>Used</th><th>Granted</th><th>Last used</th></tr>');
+    h.push('<table><tr><th>Student</th><th>Google account</th><th>Code</th>' +
+           '<th>Left</th><th>Used</th><th>Granted</th><th>Last used</th></tr>');
     banks.forEach(function (b) {
       h.push('<tr class="' + (b.left <= 0 ? 'out' : b.left <= 3 ? 'low' : '') + '">' +
-        '<td>' + escHtml(b.student) + '</td><td class="code">' + escHtml(b.code) + '</td>' +
+        '<td>' + escHtml(b.student) + '</td>' +
+        '<td class="sub">' + (b.email ? escHtml(b.email) :
+          '<span class="unlinked">not linked</span>') + '</td>' +
+        '<td class="code">' + escHtml(b.code) + '</td>' +
         '<td class="left">' + b.left + '</td><td>' + b.used + '</td>' +
         '<td>' + b.granted + '</td><td class="sub">' + escHtml(b.last || '—') + '</td></tr>');
     });
@@ -343,7 +310,7 @@ function adminPage() {
     '.due{font-weight:600;white-space:nowrap}' +
     '.code{font-family:ui-monospace,monospace}' +
     '.left{font-weight:700}tr.low .left{color:#b26a00}tr.out .left{color:#c0392b}' +
-    'tr.done td{opacity:.45}' +
+    'tr.done td{opacity:.45}.unlinked{color:#c0392b}' +
     'button{font:inherit;font-size:13px;padding:5px 12px;border:1px solid #d3d7de;' +
       'background:#fff;border-radius:7px;cursor:pointer}' +
     'button:hover{background:#f1f3f6}button[disabled]{opacity:.5;cursor:default}';
@@ -364,4 +331,114 @@ function adminPage() {
       '<scr' + 'ipt>' + js + '</scr' + 'ipt>')
     .setTitle('Drill Room - coach dashboard')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+
+/* ---------- who is this student ---------- */
+
+// Verify a Google ID token with Google, not with ourselves. Returns the
+// verified email, or '' for anything we could not vouch for.
+//
+// The client sends this token with every call. It is signed by Google and
+// expires in about an hour, so a stolen one is short-lived, and nothing the
+// browser claims about identity is trusted — only what comes back from here.
+function verifyIdToken(idToken) {
+  if (!idToken || !GOOGLE_CLIENT_ID) return '';
+
+  // tokeninfo is a network round trip; cache the verdict briefly so a page
+  // load doing three calls does not pay for three of them.
+  var cache = CacheService.getScriptCache();
+  var key = 'idt_' + Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken));
+  var hit = cache.get(key);
+  if (hit) return hit;
+
+  var res;
+  try {
+    res = UrlFetchApp.fetch(
+      'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken),
+      { muteHttpExceptions: true });
+  } catch (err) {
+    return '';
+  }
+  if (res.getResponseCode() !== 200) return '';
+
+  var p;
+  try { p = JSON.parse(res.getContentText()); } catch (err) { return ''; }
+
+  // A token minted for some other site is not a login here.
+  if (p.aud !== GOOGLE_CLIENT_ID) return '';
+  if (String(p.email_verified) !== 'true') return '';
+  if (!p.email) return '';
+
+  var expSec = Number(p.exp) || 0;
+  var nowSec = Math.floor(Date.now() / 1000);
+  if (expSec <= nowSec) return '';
+
+  var email = String(p.email).toLowerCase();
+  var ttl = Math.min(300, expSec - nowSec);
+  if (ttl > 0) cache.put(key, email, ttl);
+  return email;
+}
+
+// Credits row for a verified email. Column F holds the student's Google
+// address; the coach fills it in when handing out a code.
+function studentRow(email) {
+  var rows = sheet('Credits').getDataRange().getValues();
+  var want = String(email).trim().toLowerCase();
+  if (!want) return null;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][5] || '').trim().toLowerCase() !== want) continue;
+    return {
+      row: i + 1,
+      code: str(rows[i][0]),
+      granted: Number(rows[i][1]) || 0,
+      used: Number(rows[i][2]) || 0,
+      student: str(rows[i][3]),
+      email: want
+    };
+  }
+  return null;
+}
+
+// What the signed-in student is allowed to know: their own balance, nothing else.
+function meResponse(idToken) {
+  var email = verifyIdToken(idToken);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var s = studentRow(email);
+  if (!s) {
+    // Signed in with Google, but the coach has not linked this address to a
+    // code yet. Not an error the student can fix by retrying.
+    return { ok: true, found: false, email: email };
+  }
+  return {
+    ok: true, found: true, email: email, student: s.student,
+    code: s.code, granted: s.granted, used: s.used
+  };
+}
+
+function spendForToken(idToken) {
+  var email = verifyIdToken(idToken);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); }
+  catch (err) { return { ok: false, error: 'busy, try again' }; }
+
+  try {
+    var s = studentRow(email);
+    if (!s) return { ok: false, error: 'no credits on this account' };
+    if (s.granted - s.used <= 0) return { ok: false, error: 'empty' };
+
+    var sh = sheet('Credits');
+    var used = s.used + 1;
+    sh.getRange(s.row, 3).setValue(used);        // C = used
+    sh.getRange(s.row, 5).setValue(new Date());  // E = last used
+    return { ok: true, used: used };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  } finally {
+    lock.releaseLock();
+  }
 }

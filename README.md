@@ -65,7 +65,7 @@ The tabs it creates:
 | --- | --- |
 | `Drills` | `id`, `title`, `desc`, `time` |
 | `Events` | `date` (YYYY-MM-DD), `time`, `title`, `type`, `note` |
-| `Credits` | `code`, `granted`, `used`, `student`, `last used` |
+| `Credits` | `code`, `granted`, `used`, `student`, `last used`, `email` |
 | `Settings` | `key`, `value` — currently just `weekLabel` |
 | `Requests` | `received`, `form`, `student`, `email`, `code`, `topic`, `category`, `details`, `needed by`, `status` |
 
@@ -102,12 +102,47 @@ Config lives in one block at the top of the `<script>` in `index.html`:
 - **The Apps Script URL is public.** "Anyone" access is required for the page to
   reach it. Anyone holding the URL can query a balance if they also know a valid
   code, or spend against one. Add a shared secret to the payload if that matters.
+## Student sign-in
+
+Students sign in with Google. The browser gets an ID token from Google and
+sends it with every API call; `sheet-backend.gs` verifies that token against
+Google's `tokeninfo` endpoint before it answers. Nothing the browser *claims*
+about identity is trusted — not the email, not the credit code.
+
+This replaced an actual hole: the old `?code=FALCON-07` endpoint returned that
+student's balance to anyone who guessed the code, and codes get shared out
+loud. That endpoint is gone. Balances are now keyed to a verified Google
+account.
+
+Setup:
+
+1. Cloud Console → **APIs & Services → Credentials → Create credentials →
+   OAuth client ID → Web application**.
+2. Under *Authorised JavaScript origins* add `https://drills.nwatkins.org`
+   (and `http://localhost:8000` if you test locally).
+3. Put the client ID in **both** places, or every token is rejected as minted
+   for a different site:
+   - `GOOGLE_CLIENT_ID` in `index.html`
+   - `GOOGLE_CLIENT_ID` in `sheet-backend.gs`
+4. In the `Credits` tab, fill each student's `email` column with the Google
+   address they'll sign in with. That column is what links an account to a code.
+
+Sign-in stays **off** until both `GOOGLE_CLIENT_ID` and `SHEET_API` are set;
+until then the site uses the old unverified name/email login and honour-system
+credits, exactly as before. There is no half-on state: a login checked only in
+the browser would be bypassed from DevTools in seconds, so it isn't offered.
+
+A student who signs in before you've linked their address gets in fine and
+sees everything except credits, with a note telling them to ask you.
+
 ## The coach dashboard
 
 `?view=admin` on the Apps Script URL serves a private page listing every
 student's drill bank (emptiest first) and every open request (soonest deadline
 first), with a button to mark work done. Requests reach it because the site
-POSTs each one into the `Requests` tab.
+POSTs each one into the `Requests` tab, stamped with the verified Google
+address of whoever sent it. Students whose `email` column is still blank show
+as **not linked** in red.
 
 **This needs a second deployment.** The student endpoint must stay open to
 anonymous visitors, and that same setting would leave the dashboard open too.

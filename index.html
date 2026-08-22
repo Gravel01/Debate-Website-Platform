@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Drill Room">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
   --bg:#F6F6F4;
@@ -283,7 +284,10 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 <div id="loginScreen">
   <div class="login-card">
     <h1>Sign in</h1>
-    <p class="sub">Enter your name and email to continue.</p>
+    <p class="sub" id="loginSub">Enter your name and email to continue.</p>
+    <div id="gsiWrap" class="hidden"><div id="gsiBtn"></div></div>
+    <p class="login-err" id="liErr"></p>
+    <div id="manualLogin">
     <div class="field">
       <label for="liName">Full name</label>
       <input type="text" id="liName" placeholder="Sebastian Alvarez" autocomplete="name">
@@ -300,8 +304,8 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
       <input type="checkbox" id="liUpdates" checked>
       <span>Email me when new drills and files are posted.</span>
     </label>
-    <p class="login-err" id="liErr"></p>
     <button class="btn" id="liSubmit">Continue</button>
+    </div>
     <p class="login-foot">Signing in registers your email with your coach. Your progress is saved on this device.</p>
   </div>
   <p class="login-brand">Watkins Debate</p>
@@ -536,6 +540,12 @@ const BOOKING_URL = "https://calendar.google.com/calendar/appointments/schedules
 
 const SHEET_API = "";
 
+// OAuth client ID from Cloud Console > Credentials > OAuth client > Web
+// application, with https://drills.nwatkins.org as an authorised JavaScript
+// origin. Must match GOOGLE_CLIENT_ID in sheet-backend.gs.
+// Sign-in stays off until both this and SHEET_API are set.
+const GOOGLE_CLIENT_ID = "";
+
 let DRILL_BANK = {
   "FALCON-07": 20,
   "RIVER-22": 5,
@@ -659,6 +669,7 @@ document.getElementById("shSave").addEventListener("click", ()=>{
   applyProfile();
 });
 document.getElementById("shSignOut").addEventListener("click", ()=>{
+  if (AUTH_ON){ signOut(); return; }   // also drops the Google token
   store.del("drillroom_profile");
   backdrop.classList.remove("open");
   app.classList.add("hidden");
@@ -694,6 +705,114 @@ document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_E
 // ---------- drill bank ----------
 let credits = null;           // {granted, used} from the sheet, else null
 let creditsOffline = false;   // sheet configured but unreachable
+let creditsUnlinked = false;  // signed in, but no code linked to this account
+
+// ---------- Google sign-in ----------
+// Identity comes from a Google ID token the Apps Script verifies. Both the
+// client ID and SHEET_API must be set, because without a server to check the
+// token there is nothing to verify it against -- a browser-side check on a
+// static site protects nothing.
+const AUTH_ON = !!(GOOGLE_CLIENT_ID && SHEET_API);
+const ID_TOKEN_KEY = "drillroom_idtoken";
+
+function idToken(){ return store.get(ID_TOKEN_KEY) || ""; }
+function setIdToken(t){ t ? store.set(ID_TOKEN_KEY, t) : store.del(ID_TOKEN_KEY); }
+
+// Read the token's own claims for display only -- the name to greet, the
+// avatar letter. Never for anything that decides access; the server re-checks.
+function jwtClaims(token){
+  try{
+    const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(part);
+    const bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch(e){ return {}; }
+}
+
+async function callApi(payload){
+  return await sheetFetch(SHEET_API, {
+    method:"POST", headers:{ "Content-Type":"text/plain" },
+    body: JSON.stringify(Object.assign({ idToken: idToken() }, payload))
+  });
+}
+
+// null = couldn't reach the server; {ok:false} = the token is no longer good.
+async function fetchMe(){
+  if (!AUTH_ON || !idToken()) return null;
+  try { return await callApi({ action:"me" }); }
+  catch(e){
+    console.error("[Drill Room] Couldn't check your sign-in.", e.message);
+    return null;
+  }
+}
+
+function signOut(){
+  setIdToken("");
+  store.del("drillroom_profile");
+  try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch(e){}
+  location.reload();
+}
+
+// Called by Google's script once the student picks an account.
+window.onGoogleCredential = async (res)=>{
+  const err = document.getElementById("liErr");
+  err.textContent = "Signing you in…";
+
+  setIdToken(res.credential);
+  const me = await fetchMe();
+
+  if (!me){
+    setIdToken("");
+    err.textContent = "Couldn't reach the server. Try again in a moment.";
+    return;
+  }
+  if (!me.ok){
+    setIdToken("");
+    err.textContent = "That sign-in didn't work. Try again.";
+    return;
+  }
+
+  const claims = jwtClaims(res.credential);
+  setProfile({
+    name: me.student || claims.name || claims.email || "",
+    email: me.email,
+    code: me.code || "",
+    updates: true
+  });
+
+  // Signed in fine, but the coach hasn't linked this address to a code yet.
+  // Everything except credits still works, so let them in and say so.
+  if (!me.found){
+    credits = null;
+    creditsUnlinked = true;
+  }
+
+  err.textContent = "";
+  enterApp();
+};
+
+function initGoogleSignIn(){
+  if (!AUTH_ON || !window.google || !google.accounts) return;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: window.onGoogleCredential
+  });
+  google.accounts.id.renderButton(document.getElementById("gsiBtn"), {
+    theme: "outline", size: "large", width: 280, text: "signin_with"
+  });
+}
+
+// The Google script loads async, so it may land before or after this file runs.
+if (AUTH_ON){
+  document.getElementById("manualLogin").classList.add("hidden");
+  document.getElementById("gsiWrap").classList.remove("hidden");
+  document.getElementById("loginSub").textContent =
+    "Sign in with your Google account to continue.";
+  if (window.google && window.google.accounts) initGoogleSignIn();
+  else window.addEventListener("load", initGoogleSignIn);
+} else {
+  document.getElementById("gsiWrap").classList.add("hidden");
+}
 
 function bankCode(){
   const p = getProfile();
@@ -733,29 +852,28 @@ async function sheetFetch(url, opts){
 }
 
 async function loadCredits(){
-  credits = null; creditsOffline = false;
-  const code = bankCode();
-  if (!SHEET_API || !code){ renderBank(); return; }
-  try{
-    const j = await sheetFetch(`${SHEET_API}?code=${encodeURIComponent(code)}`);
-    if (j.found) credits = { granted: j.granted, used: j.used };
-  } catch(e){
-    creditsOffline = true;
-    console.error("[Drill Room] Couldn't load your credit balance.", e.message);
-  }
+  credits = null; creditsOffline = false; creditsUnlinked = false;
+
+  // Without sign-in there is no server to ask, so fall back to the
+  // honour-system balance in localStorage.
+  if (!AUTH_ON){ renderBank(); return; }
+
+  const me = await fetchMe();
+  if (!me){ creditsOffline = true; }
+  else if (!me.ok){ signOut(); return; }          // token expired or revoked
+  else if (me.found){ credits = { granted: me.granted, used: me.used }; }
+  else { creditsUnlinked = true; }
   renderBank();
 }
 
 async function spendCredit(){
-  if (SHEET_API){
+  if (AUTH_ON){
     if (!credits) return false;
     try{
-      const j = await sheetFetch(SHEET_API, {
-        method:"POST", headers:{ "Content-Type":"text/plain" },
-        body: JSON.stringify({ action:"spend", code: bankCode() })
-      });
+      const j = await callApi({ action:"spend" });
       if (j.ok){ credits.used = j.used; renderBank(); return true; }
       if (j.error === "empty"){ credits.used = credits.granted; renderBank(); }
+      if (j.error === "signed out"){ signOut(); }
       return false;
     } catch(e){
       console.error("[Drill Room] Couldn't spend a credit.", e.message);
@@ -785,7 +903,8 @@ function renderBank(){
     : unknownCode ? "Code not recognized"
     : bal === 0 ? "You're out of credits" : "Drill credits";
   document.getElementById("bankSub").textContent =
-    !bankCode() ? "Add the code your coach gave you under Account (top right) to see your balance."
+    creditsUnlinked ? "Your coach hasn't linked this Google account to a credit code yet."
+    : !bankCode() ? "Add the code your coach gave you under Account (top right) to see your balance."
     : creditsOffline ? "Something's wrong on our end. Try again in a minute, or email your coach."
     : unknownCode ? "Check the code under Account (top right), or ask your coach for a new one."
     : bal === 0 ? "Purchase a pack to keep requesting custom drills."
@@ -945,12 +1064,9 @@ async function submitForm(form, statusEl, subjectPrefix, formName, usesCredit){
 
   // Log it to the Sheet so it lands on the coach's dashboard. Best effort:
   // a failure here must not cost the student their request.
-  if (SHEET_API){
+  if (AUTH_ON){
     try{
-      await sheetFetch(SHEET_API, {
-        method:"POST", headers:{ "Content-Type":"text/plain" },
-        body: JSON.stringify({ action:"request", fields: data })
-      });
+      await callApi({ action:"request", fields: data });
     } catch(err){
       console.error("[Drill Room] Couldn't log this request to the Sheet.", err.message);
     }

@@ -52,7 +52,7 @@ Setup, about five minutes:
 1. Create a Google Sheet.
 2. **Extensions → Apps Script**. Delete the starter code, paste in all of
    `sheet-backend.gs`.
-3. Run `setupSheet()` once from the editor toolbar. It creates the four tabs
+3. Run `setupSheet()` once from the editor toolbar. It creates the five tabs
    with headers and a sample row each. Authorize when prompted.
 4. **Deploy → New deployment → Web app**, with:
    - Execute as: **Me**
@@ -67,6 +67,7 @@ The tabs it creates:
 | `Events` | `date` (YYYY-MM-DD), `time`, `title`, `type`, `note` |
 | `Credits` | `code`, `granted`, `used`, `student`, `last used` |
 | `Settings` | `key`, `value` — currently just `weekLabel` |
+| `Requests` | `received`, `form`, `student`, `email`, `code`, `topic`, `category`, `details`, `needed by`, `status` |
 
 `type` on an event is `session`, `tournament`, or `deadline`. Bump a drill's
 `id` to reset everyone's checkmark for it; keep the id and the checkmark sticks.
@@ -101,6 +102,34 @@ Config lives in one block at the top of the `<script>` in `index.html`:
 - **The Apps Script URL is public.** "Anyone" access is required for the page to
   reach it. Anyone holding the URL can query a balance if they also know a valid
   code, or spend against one. Add a shared secret to the payload if that matters.
+## The coach dashboard
+
+`?view=admin` on the Apps Script URL serves a private page listing every
+student's drill bank (emptiest first) and every open request (soonest deadline
+first), with a button to mark work done. Requests reach it because the site
+POSTs each one into the `Requests` tab.
+
+**This needs a second deployment.** The student endpoint must stay open to
+anonymous visitors, and that same setting would leave the dashboard open too.
+So make two deployments of the same script:
+
+| Deployment | Who has access | Used for |
+| --- | --- | --- |
+| Students | **Anyone** | the `/exec` URL in `SHEET_API` |
+| Coach | **Only myself**, or **Anyone within nwatkins.org** | the `?view=admin` URL, bookmarked |
+
+Google enforces the login on the second one before your code runs. On top of
+that, `adminPage()` re-checks the caller against `ADMIN_DOMAIN` server-side, so
+the public URL refuses `?view=admin` even if someone guesses it — an anonymous
+visitor has no email to match.
+
+Set `ADMIN_DOMAIN` at the top of `sheet-backend.gs` if the domain ever changes.
+
+> One caveat worth knowing: **"Anyone within nwatkins.org" only appears if
+> nwatkins.org is a Google Workspace domain.** If it is just email forwarding
+> onto a personal Gmail, that option will not be offered — use **Only myself**
+> and sign in as the account that owns the Sheet.
+
 - **Without the Sheet, credits are honor-system** — they live in `localStorage`
   and reset if the student clears site data.
 

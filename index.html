@@ -172,6 +172,12 @@ textarea{min-height:100px;resize:vertical}
 .drill.done .drill-desc{color:var(--text-3)}
 .drill-time{flex:none;font-size:12.5px;color:var(--text-3);font-weight:500;margin-top:3px}
 .empty-note{padding:24px;text-align:center;color:var(--text-2);font-size:14px}
+.add-drill{margin-top:16px}
+.add-drill h3{font-size:16px;font-weight:700}
+.add-drill > p{font-size:13px;color:var(--text-2);margin:4px 0 14px}
+.drill-mine{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2);margin-left:8px}
+.drill-del{background:none;border:0;color:var(--text-2);font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px}
+.drill-del:hover{color:#c0392b;background:rgba(192,57,43,.08)}
 
 /* ---------- forms ---------- */
 .form-intro{margin-bottom:18px}
@@ -341,6 +347,28 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
       <div class="bar"><i id="barFill"></i></div>
     </div>
     <div class="drill-group" id="drillList"></div>
+
+    <div class="card add-drill">
+      <h3>Add your own drill</h3>
+      <p>Anything you want to keep track of. Saved on this device only &mdash; your coach doesn't see these.</p>
+      <form id="myDrillForm">
+        <div class="row">
+          <div class="field">
+            <label for="mdTitle">Drill</label>
+            <input type="text" id="mdTitle" required placeholder="2NR redo &times; 3">
+          </div>
+          <div class="field">
+            <label for="mdTime">How long</label>
+            <input type="text" id="mdTime" placeholder="45 min">
+          </div>
+        </div>
+        <div class="field">
+          <label for="mdDesc">Notes</label>
+          <textarea id="mdDesc" placeholder="What you're repping, and what counts as done."></textarea>
+        </div>
+        <button class="btn secondary" type="submit">Add Drill</button>
+      </form>
+    </div>
   </section>
 
   <!-- BOOK A SESSION -->
@@ -409,7 +437,7 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
       </div>
       <div class="field">
         <label for="drDetails">What do you want to work on?</label>
-        <textarea id="drDetails" name="details" required placeholder="My 1AR collapses when I'm behind on case. I want reps on strategic collapse under time pressure."></textarea>
+        <textarea id="drDetails" name="details" required placeholder="Give me a brief description of the drill you'd like to complete."></textarea>
       </div>
       <button class="btn" type="submit">Send Request</button>
       <p class="form-status" id="drStatus" role="status"></p>
@@ -439,6 +467,10 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
       <div class="field">
         <label for="frLink">Doc or recording link</label>
         <input type="url" id="frLink" name="link" placeholder="Google Doc or Drive share link">
+      </div>
+      <div class="field">
+        <label for="frDue">Needed by</label>
+        <input type="date" id="frDue" name="needed_by" required>
       </div>
       <div class="field">
         <label for="frNotes">Notes</label>
@@ -498,7 +530,7 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 const COACH_EMAIL = "debate@nwatkins.org";
 
 const FORMSPREE_ENDPOINT = "";
-const WEEK_LABEL = "Week of July 13";
+const WEEK_LABEL = "Week of August 17";
 
 const BOOKING_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ2Og-ERQUIniR-3AqTzI-bbP-ldEyC5n0-hMznc1n1DZEaLvEV8XbE15hJsOsMlSighuHtPgYbX";
 
@@ -511,11 +543,11 @@ let DRILL_BANK = {
 };
 
 let EVENTS = [
-  { date: "2026-07-16", time: "6:00 PM",  title: "Practice round — LD",        type: "session",    note: "Zoom link in email. Bring your flows." },
-  { date: "2026-07-18", time: "11:00 AM", title: "Drill review session",       type: "session",    note: "We'll go over this week's redos." },
-  { date: "2026-07-20",                    title: "Case outline due",           type: "deadline",   note: "Submit via Files tab before midnight." },
-  { date: "2026-07-25",                    title: "Grapevine RR",               type: "tournament", note: "Prep meeting the Thursday before." },
-  { date: "2026-08-01", time: "6:00 PM",  title: "Practice round — CX",        type: "session" }
+  { date: "2026-08-22", time: "11:00 AM", title: "Drill review session",  type: "session",    note: "We'll go over this week's redos." },
+  { date: "2026-08-24", time: "6:00 PM",  title: "Practice round — LD",   type: "session",    note: "Zoom link in email. Bring your flows." },
+  { date: "2026-08-27",                   title: "Case outline due",      type: "deadline",   note: "Submit via the Files tab before midnight." },
+  { date: "2026-08-29",                   title: "Grapevine RR",          type: "tournament", note: "Prep meeting the Thursday before." },
+  { date: "2026-09-03", time: "6:00 PM",  title: "Practice round — CX",   type: "session" }
 ];
 
 const PURCHASE_URL = "https://venmo.com/u/Nathaniel-Watkins-19";
@@ -526,32 +558,9 @@ const PACKS = [
   { credits: 25, price: "$150", note: "$6 per drill" }
 ];
 
-let DRILLS = [
-  {
-    id: "w1-rebuttal-redo",
-    title: "2NR redo × 3",
-    desc: "Re-give your last practice-round 2NR three times. Third rep must finish 30 seconds under time.",
-    time: "45 min"
-  },
-  {
-    id: "w1-flow-drill",
-    title: "Flow one elim round",
-    desc: "Flow a recorded TOC elim on paper, all speeches. Photograph your flow for our next session.",
-    time: "60 min"
-  },
-  {
-    id: "w1-cx-script",
-    title: "Script 5 CX questions",
-    desc: "Pick your worst matchup and write five cross-ex questions that set up your best offense.",
-    time: "20 min"
-  },
-  {
-    id: "w1-speaking",
-    title: "Pen drill + backwards reading",
-    desc: "10 minutes pen drill, then read one card backwards for clarity. Record it and listen back.",
-    time: "15 min"
-  }
-];
+// Empty by default. The coach's drills arrive from the Google Sheet;
+// anything a student adds for themselves lives in myDrills() below.
+let DRILLS = [];
 
 /* ---------------- APP ---------------- */
 
@@ -671,6 +680,14 @@ document.querySelectorAll(".tab").forEach(tab=>{
 
 // ---------- labels ----------
 document.getElementById("weekLabel").textContent = WEEK_LABEL;
+
+// A deadline in the past helps nobody. (dstr is declared further down, so
+// this can't use it -- const is in the temporal dead zone until then.)
+(function(){
+  const t = new Date();
+  document.getElementById("frDue").min =
+    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+})();
 document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_EMAIL}`;
 
 
@@ -694,15 +711,38 @@ function bankBalance(){
   return Math.max(0, bankGranted() - parseInt(store.get(usedKey()) || "0", 10));
 }
 
+// Fetch JSON from the Apps Script endpoint, loudly.
+// A deployment that isn't set to "Anyone" returns Google's HTML sign-in page
+// rather than JSON, so a bare res.json() would throw and look exactly like
+// "SHEET_API was never set" - silent, and impossible to tell apart.
+async function sheetFetch(url, opts){
+  const res  = await fetch(url, opts);
+  const body = await res.text();
+  if (!res.ok){
+    throw new Error(`HTTP ${res.status} from the Sheet API - is the deployment still live?`);
+  }
+  if (/^\s*</.test(body)){
+    throw new Error(
+      "Got HTML instead of JSON, so the web app isn't public. In Apps Script: " +
+      "Deploy > Manage deployments > edit > Who has access: Anyone. Redeploy, " +
+      "then paste the fresh /exec URL into SHEET_API."
+    );
+  }
+  try { return JSON.parse(body); }
+  catch(e){ throw new Error("Unparseable JSON from the Sheet API: " + body.slice(0,120)); }
+}
+
 async function loadCredits(){
   credits = null; creditsOffline = false;
   const code = bankCode();
   if (!SHEET_API || !code){ renderBank(); return; }
   try{
-    const res = await fetch(`${SHEET_API}?code=${encodeURIComponent(code)}`);
-    const j = await res.json();
+    const j = await sheetFetch(`${SHEET_API}?code=${encodeURIComponent(code)}`);
     if (j.found) credits = { granted: j.granted, used: j.used };
-  } catch(e){ creditsOffline = true; }
+  } catch(e){
+    creditsOffline = true;
+    console.error("[Drill Room] Couldn't load your credit balance.", e.message);
+  }
   renderBank();
 }
 
@@ -710,15 +750,17 @@ async function spendCredit(){
   if (SHEET_API){
     if (!credits) return false;
     try{
-      const res = await fetch(SHEET_API, {
+      const j = await sheetFetch(SHEET_API, {
         method:"POST", headers:{ "Content-Type":"text/plain" },
         body: JSON.stringify({ action:"spend", code: bankCode() })
       });
-      const j = await res.json();
       if (j.ok){ credits.used = j.used; renderBank(); return true; }
       if (j.error === "empty"){ credits.used = credits.granted; renderBank(); }
       return false;
-    } catch(e){ return false; }
+    } catch(e){
+      console.error("[Drill Room] Couldn't spend a credit.", e.message);
+      return false;
+    }
   }
   store.set(usedKey(), String(parseInt(store.get(usedKey()) || "0", 10) + 1));
   renderBank();
@@ -786,14 +828,55 @@ function storageKey(id){
   return `drillroom_done_${who}_${id}`;
 }
 
+// Drill text reaches innerHTML, and students type their own, so escape it.
+function esc(v){
+  return String(v == null ? "" : v).replace(/[&<>"']/g, c => (
+    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]
+  ));
+}
+
+// Drills a student added for themselves. Never leaves this device.
+const MY_DRILLS_KEY = "drillroom_mydrills";
+function myDrills(){
+  try { return JSON.parse(store.get(MY_DRILLS_KEY) || "[]"); } catch(e){ return []; }
+}
+function setMyDrills(list){ store.set(MY_DRILLS_KEY, JSON.stringify(list)); }
+// Coach's drills first, then the student's own.
+function allDrills(){
+  return DRILLS.concat(myDrills().map(d => Object.assign({ mine:true }, d)));
+}
+
+document.getElementById("myDrillForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const title = document.getElementById("mdTitle").value.trim();
+  if (!title) return;
+  const list = myDrills();
+  list.push({
+    id: "mine-" + Date.now().toString(36),
+    title,
+    desc: document.getElementById("mdDesc").value.trim(),
+    time: document.getElementById("mdTime").value.trim()
+  });
+  setMyDrills(list);
+  e.target.reset();
+  renderDrills();
+});
+
+function deleteMyDrill(id){
+  setMyDrills(myDrills().filter(d => d.id !== id));
+  store.del(storageKey(id));
+  renderDrills();
+}
+
 function renderDrills(){
   const list = document.getElementById("drillList");
   list.innerHTML = "";
-  if (!DRILLS.length){
-    list.innerHTML = '<p class="empty-note">No drills posted this week. Check back soon, or request one.</p>';
+  const items = allDrills();
+  if (!items.length){
+    list.innerHTML = '<p class="empty-note">Nothing assigned this week. Add your own below to keep track, or request a custom drill.</p>';
     updateProgress(); return;
   }
-  DRILLS.forEach(d=>{
+  items.forEach(d=>{
     const done = store.get(storageKey(d.id)) === "1";
     const row = document.createElement("div");
     row.className = "drill" + (done ? " done" : "");
@@ -805,10 +888,11 @@ function renderDrills(){
         <svg width="12" height="12" viewBox="0 0 13 13"><path d="M2 7l3 3 6-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <div class="drill-body">
-        <div class="drill-title">${d.title}</div>
-        <div class="drill-desc">${d.desc}</div>
+        <div class="drill-title">${esc(d.title)}${d.mine ? '<span class="drill-mine">yours</span>' : ""}</div>
+        <div class="drill-desc">${esc(d.desc)}</div>
       </div>
-      <div class="drill-time">${d.time || ""}</div>`;
+      <div class="drill-time">${esc(d.time || "")}</div>
+      ${d.mine ? `<button class="drill-del" type="button" aria-label="Delete this drill">&times;</button>` : ""}`;
     const toggle = ()=>{
       const nowDone = !(store.get(storageKey(d.id)) === "1");
       store.set(storageKey(d.id), nowDone ? "1" : "0");
@@ -820,14 +904,20 @@ function renderDrills(){
     row.addEventListener("keydown", e=>{
       if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); }
     });
+    const del = row.querySelector(".drill-del");
+    if (del) del.addEventListener("click", ev=>{
+      ev.stopPropagation();   // don't also toggle the row
+      deleteMyDrill(d.id);
+    });
     list.appendChild(row);
   });
   updateProgress();
 }
 
 function updateProgress(){
-  const total = DRILLS.length;
-  const done = DRILLS.filter(d=> store.get(storageKey(d.id))==="1").length;
+  const items = allDrills();
+  const total = items.length;
+  const done = items.filter(d=> store.get(storageKey(d.id))==="1").length;
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById("barFill").style.width = pct + "%";
   document.getElementById("progressTitle").textContent =
@@ -852,6 +942,19 @@ async function submitForm(form, statusEl, subjectPrefix, formName, usesCredit){
   data._replyto = p.email;
 
   const spend = async ()=> usesCredit ? await spendCredit() : true;
+
+  // Log it to the Sheet so it lands on the coach's dashboard. Best effort:
+  // a failure here must not cost the student their request.
+  if (SHEET_API){
+    try{
+      await sheetFetch(SHEET_API, {
+        method:"POST", headers:{ "Content-Type":"text/plain" },
+        body: JSON.stringify({ action:"request", fields: data })
+      });
+    } catch(err){
+      console.error("[Drill Room] Couldn't log this request to the Sheet.", err.message);
+    }
+  }
 
   if (FORMSPREE_ENDPOINT){
     statusEl.textContent = "Sending…"; statusEl.className = "form-status";
@@ -959,13 +1062,14 @@ function renderAgenda(){
 async function loadContent(){
   if (!SHEET_API) return;
   try{
-    const res = await fetch(SHEET_API);
-    const j = await res.json();
+    const j = await sheetFetch(SHEET_API);
     if (Array.isArray(j.drills) && j.drills.length) DRILLS = j.drills;
     if (Array.isArray(j.events)) EVENTS = j.events;
     if (j.weekLabel) document.getElementById("weekLabel").textContent = j.weekLabel;
     renderDrills(); renderAgenda();
-  } catch(e){ /* keep the built-in lists */ }
+  } catch(e){
+    console.error("[Drill Room] Live content failed; showing the built-in lists.", e.message);
+  }
 }
 
 renderBooking(); renderAgenda(); loadContent();

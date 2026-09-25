@@ -73,6 +73,18 @@ textarea{min-height:100px;resize:vertical}
 .login-err{font-size:13px;color:var(--red);font-weight:500;min-height:1.2em;margin-bottom:6px}
 .login-foot{margin-top:16px;font-size:12px;color:var(--text-3);line-height:1.5}
 .login-brand{margin-top:20px;font-size:13px;color:var(--text-3)}
+#gsiWrap{display:flex;justify-content:center;margin:4px 0 10px;min-height:44px}
+.notice{
+  text-align:left;background:var(--bg-2,#f6f7f9);border:1px solid var(--line,#e3e6eb);
+  border-radius:10px;padding:16px;margin-top:4px
+}
+.notice h3{font-size:15px;font-weight:700;margin:0 0 6px}
+.notice p{font-size:13px;color:var(--text-2);line-height:1.55;margin:0 0 8px}
+.notice p:last-child{margin-bottom:0}
+.notice code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.acct{margin:0 0 18px;font-size:14px}
+.acct dt{font-size:12px;color:var(--text-3);margin-top:12px}
+.acct dd{margin:2px 0 0;font-weight:600;word-break:break-word}
 
 /* ================= APP CHROME ================= */
 .topbar{
@@ -283,30 +295,34 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 <!-- ================= LOGIN SCREEN ================= -->
 <div id="loginScreen">
   <div class="login-card">
-    <h1>Sign in</h1>
-    <p class="sub" id="loginSub">Enter your name and email to continue.</p>
-    <div id="gsiWrap" class="hidden"><div id="gsiBtn"></div></div>
-    <p class="login-err" id="liErr"></p>
-    <div id="manualLogin">
-    <div class="field">
-      <label for="liName">Full name</label>
-      <input type="text" id="liName" placeholder="Sebastian Alvarez" autocomplete="name">
+    <h1>Drill Room</h1>
+    <p class="sub" id="loginSub">Sign in with the Google account your coach has on file.</p>
+
+    <div id="gsiWrap"><div id="gsiBtn"></div></div>
+
+    <p class="login-err" id="liErr" role="status"></p>
+
+    <!-- Google says who you are, but that address isn't on the roster. -->
+    <div id="blockedNotice" class="notice hidden">
+      <h3>You're not on the roster yet</h3>
+      <p>You signed in as <b id="blockedEmail"></b>, but your coach hasn't added
+         that address. Accounts are created by your coach — there's no sign-up here.</p>
+      <p>Email <a id="blockedMail" href="#">your coach</a> and ask them to add
+         this exact address, or
+         <a href="#" id="blockedSwitch">try a different Google account</a>.</p>
     </div>
-    <div class="field">
-      <label for="liEmail">Email</label>
-      <input type="email" id="liEmail" placeholder="you@school.edu" autocomplete="email">
+
+    <!-- The backend hasn't been configured yet. Nobody gets in. -->
+    <div id="setupNotice" class="notice hidden">
+      <h3>Not set up yet</h3>
+      <p>Sign-in isn't configured, so there's no way in right now. The setup
+         steps are in <code>README.md</code> — an OAuth client ID and a
+         deployed Apps Script URL.</p>
+      <p>Questions: <a id="setupMail" href="#">your coach</a>.</p>
     </div>
-    <div class="field">
-      <label for="liCode">Credit code <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
-      <input type="text" id="liCode" placeholder="FALCON-07" autocomplete="off" autocapitalize="characters">
-    </div>
-    <label class="optin">
-      <input type="checkbox" id="liUpdates" checked>
-      <span>Email me when new drills and files are posted.</span>
-    </label>
-    <button class="btn" id="liSubmit">Continue</button>
-    </div>
-    <p class="login-foot">Signing in registers your email with your coach. Your progress is saved on this device.</p>
+
+    <p class="login-foot" id="loginFoot">Your coach creates accounts. Nobody can sign
+       up on your behalf, and nobody else can see your drills.</p>
   </div>
   <p class="login-brand">Watkins Debate</p>
 </div>
@@ -494,24 +510,13 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 <div class="sheet-backdrop" id="sheetBackdrop">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h3 id="sheetTitle">Account</h3>
-    <p>Update your details, or sign out on shared computers.</p>
-    <div class="field">
-      <label for="shName">Full name</label>
-      <input type="text" id="shName" autocomplete="name">
-    </div>
-    <div class="field">
-      <label for="shEmail">Email</label>
-      <input type="email" id="shEmail" autocomplete="email">
-    </div>
-    <div class="field">
-      <label for="shCode">Credit code</label>
-      <input type="text" id="shCode" placeholder="FALCON-07" autocomplete="off" autocapitalize="characters">
-    </div>
-    <label class="optin">
-      <input type="checkbox" id="shUpdates">
-      <span>Email me when new drills and files are posted.</span>
-    </label>
-    <button class="btn" id="shSave">Save</button>
+    <p>Signed in with Google. Your coach sets your name and drill bank, so
+       there's nothing to edit here.</p>
+    <dl class="acct">
+      <dt>Name</dt><dd id="shName">—</dd>
+      <dt>Google account</dt><dd id="shEmail">—</dd>
+      <dt>Drill bank</dt><dd id="shCode">—</dd>
+    </dl>
     <button class="btn quiet" id="shSignOut">Sign Out</button>
   </div>
 </div>
@@ -533,32 +538,19 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 
 const COACH_EMAIL = "debate@nwatkins.org";
 
+// Optional. A copy of each request by email, on top of the Sheet.
 const FORMSPREE_ENDPOINT = "";
-const WEEK_LABEL = "Week of August 17";
 
 const BOOKING_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ2Og-ERQUIniR-3AqTzI-bbP-ldEyC5n0-hMznc1n1DZEaLvEV8XbE15hJsOsMlSighuHtPgYbX";
 
-const SHEET_API = "";
+// The /exec URL of the Apps Script deployment. Everything a student sees
+// comes from here, keyed to their verified Google account.
+const SHEET_API = "https://script.google.com/macros/s/AKfycbyuYeaWpmqWyFnJhu_wyExe-dZK5X04OM56wFV9xiFAT7yCUyXmgcqIlnWiVy0UTrhvgg/exec";
 
 // OAuth client ID from Cloud Console > Credentials > OAuth client > Web
 // application, with https://drills.nwatkins.org as an authorised JavaScript
 // origin. Must match GOOGLE_CLIENT_ID in sheet-backend.gs.
-// Sign-in stays off until both this and SHEET_API are set.
-const GOOGLE_CLIENT_ID = "";
-
-let DRILL_BANK = {
-  "FALCON-07": 20,
-  "RIVER-22": 5,
-  "SUMMIT-14": 12
-};
-
-let EVENTS = [
-  { date: "2026-08-22", time: "11:00 AM", title: "Drill review session",  type: "session",    note: "We'll go over this week's redos." },
-  { date: "2026-08-24", time: "6:00 PM",  title: "Practice round — LD",   type: "session",    note: "Zoom link in email. Bring your flows." },
-  { date: "2026-08-27",                   title: "Case outline due",      type: "deadline",   note: "Submit via the Files tab before midnight." },
-  { date: "2026-08-29",                   title: "Grapevine RR",          type: "tournament", note: "Prep meeting the Thursday before." },
-  { date: "2026-09-03", time: "6:00 PM",  title: "Practice round — CX",   type: "session" }
-];
+const GOOGLE_CLIENT_ID = "604736692184-9e0dv1jekuaqvkqgsuuatjgjlrg9bklu.apps.googleusercontent.com";
 
 const PURCHASE_URL = "https://venmo.com/u/Nathaniel-Watkins-19";
 
@@ -568,11 +560,19 @@ const PACKS = [
   { credits: 25, price: "$150", note: "$6 per drill" }
 ];
 
-// Empty by default. The coach's drills arrive from the Google Sheet;
-// anything a student adds for themselves lives in myDrills() below.
+// Both lists arrive from the Sheet, filtered to the signed-in student. There
+// are deliberately no built-in fallbacks: content that showed up without the
+// server having said who you are would be content nobody checked you could see.
 let DRILLS = [];
+let EVENTS = [];
 
 /* ---------------- APP ---------------- */
+
+// Sign-in needs a client ID to mint tokens and a server to verify them
+// against. Without both there is no way to check anything, and a login
+// checked only in the browser would be bypassed from DevTools in seconds —
+// so the site refuses to let anyone in rather than offering a weaker door.
+const AUTH_ON = !!(GOOGLE_CLIENT_ID && SHEET_API);
 
 // safe storage (in-memory fallback where localStorage is blocked)
 const mem = {};
@@ -582,253 +582,26 @@ const store = {
   del(k){ try { localStorage.removeItem(k); } catch(e){ delete mem[k]; } }
 };
 
+// A cached copy of the last verified answer, for the greeting on reload. It
+// is never the basis for access: every load re-asks the server.
 function getProfile(){
   try { return JSON.parse(store.get("drillroom_profile") || "null"); }
   catch(e){ return null; }
 }
 function setProfile(p){ store.set("drillroom_profile", JSON.stringify(p)); }
 
-const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
-// ---------- login ----------
 const loginScreen = document.getElementById("loginScreen");
 const app = document.getElementById("app");
+const liErr = document.getElementById("liErr");
 
-document.getElementById("liSubmit").addEventListener("click", async ()=>{
-  const name = document.getElementById("liName").value.trim();
-  const email = document.getElementById("liEmail").value.trim();
-  const code = document.getElementById("liCode").value.trim().toUpperCase();
-  const updates = document.getElementById("liUpdates").checked;
-  const err = document.getElementById("liErr");
+/* ---------- session ---------- */
 
-  if (!name){ err.textContent = "Enter your name."; return; }
-  if (!validEmail(email)){ err.textContent = "Enter a valid email address."; return; }
-  if (code && !(code in DRILL_BANK)){ err.textContent = "That credit code isn't recognized. Check with your coach, or leave it blank for now."; return; }
-  err.textContent = "";
-
-  setProfile({ name, email, code, updates });
-
-  // Register the sign-up with the coach (silent if Formspree is set).
-  if (FORMSPREE_ENDPOINT){
-    try {
-      await fetch(FORMSPREE_ENDPOINT, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
-        body: JSON.stringify({
-          _subject: `[Drill Room Sign-up] ${name}`,
-          _replyto: email,
-          form: "signup",
-          name, email,
-          credit_code: code || "none",
-          wants_email_updates: updates ? "yes" : "no"
-        })
-      });
-    } catch(e){ /* non-blocking */ }
-  }
-
-  enterApp();
-});
-["liName","liEmail","liCode"].forEach(id=>{
-  document.getElementById(id).addEventListener("keydown", e=>{
-    if (e.key==="Enter") document.getElementById("liSubmit").click();
-  });
-});
-
-function enterApp(){
-  loginScreen.classList.add("hidden");
-  app.classList.remove("hidden");
-  applyProfile();
-}
-
-// ---------- profile / greeting ----------
-function applyProfile(){
-  const p = getProfile(); if (!p) return;
-  document.getElementById("greeting").textContent = `Hi, ${p.name.split(" ")[0]}.`;
-  document.getElementById("avatarBtn").textContent = p.name.trim()[0].toUpperCase();
-  renderDrills();
-  loadCredits();
-}
-
-// ---------- account sheet ----------
-const backdrop = document.getElementById("sheetBackdrop");
-document.getElementById("avatarBtn").addEventListener("click", ()=>{
-  const p = getProfile() || {name:"",email:"",code:"",updates:true};
-  document.getElementById("shName").value = p.name;
-  document.getElementById("shEmail").value = p.email;
-  document.getElementById("shCode").value = p.code || "";
-  document.getElementById("shUpdates").checked = !!p.updates;
-  backdrop.classList.add("open");
-});
-document.getElementById("shSave").addEventListener("click", ()=>{
-  const name = document.getElementById("shName").value.trim();
-  const email = document.getElementById("shEmail").value.trim();
-  const code = document.getElementById("shCode").value.trim().toUpperCase();
-  if (!name || !validEmail(email)) return;
-  setProfile({ name, email, code, updates: document.getElementById("shUpdates").checked });
-  backdrop.classList.remove("open");
-  applyProfile();
-});
-document.getElementById("shSignOut").addEventListener("click", ()=>{
-  if (AUTH_ON){ signOut(); return; }   // also drops the Google token
-  store.del("drillroom_profile");
-  backdrop.classList.remove("open");
-  app.classList.add("hidden");
-  loginScreen.classList.remove("hidden");
-  document.getElementById("liName").value = "";
-  document.getElementById("liEmail").value = "";
-});
-backdrop.addEventListener("click", e=>{ if (e.target===backdrop) backdrop.classList.remove("open"); });
-
-// ---------- tabs ----------
-document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click", ()=>{
-    document.querySelectorAll(".tab").forEach(t=> t.setAttribute("aria-selected","false"));
-    document.querySelectorAll(".panel").forEach(p=> p.classList.remove("active"));
-    tab.setAttribute("aria-selected","true");
-    document.getElementById(tab.dataset.panel).classList.add("active");
-  });
-});
-
-// ---------- labels ----------
-document.getElementById("weekLabel").textContent = WEEK_LABEL;
-
-// A deadline in the past helps nobody. (dstr is declared further down, so
-// this can't use it -- const is in the temporal dead zone until then.)
-(function(){
-  const t = new Date();
-  document.getElementById("frDue").min =
-    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
-})();
-document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_EMAIL}`;
-
-
-// ---------- drill bank ----------
-let credits = null;           // {granted, used} from the sheet, else null
-let creditsOffline = false;   // sheet configured but unreachable
-let creditsUnlinked = false;  // signed in, but no code linked to this account
-
-// ---------- Google sign-in ----------
-// Identity comes from a Google ID token the Apps Script verifies. Both the
-// client ID and SHEET_API must be set, because without a server to check the
-// token there is nothing to verify it against -- a browser-side check on a
-// static site protects nothing.
-const AUTH_ON = !!(GOOGLE_CLIENT_ID && SHEET_API);
 const ID_TOKEN_KEY = "drillroom_idtoken";
-
 function idToken(){ return store.get(ID_TOKEN_KEY) || ""; }
 function setIdToken(t){ t ? store.set(ID_TOKEN_KEY, t) : store.del(ID_TOKEN_KEY); }
 
-// Read the token's own claims for display only -- the name to greet, the
-// avatar letter. Never for anything that decides access; the server re-checks.
-function jwtClaims(token){
-  try{
-    const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const raw = atob(part);
-    const bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes));
-  } catch(e){ return {}; }
-}
-
-async function callApi(payload){
-  return await sheetFetch(SHEET_API, {
-    method:"POST", headers:{ "Content-Type":"text/plain" },
-    body: JSON.stringify(Object.assign({ idToken: idToken() }, payload))
-  });
-}
-
-// null = couldn't reach the server; {ok:false} = the token is no longer good.
-async function fetchMe(){
-  if (!AUTH_ON || !idToken()) return null;
-  try { return await callApi({ action:"me" }); }
-  catch(e){
-    console.error("[Drill Room] Couldn't check your sign-in.", e.message);
-    return null;
-  }
-}
-
-function signOut(){
-  setIdToken("");
-  store.del("drillroom_profile");
-  try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch(e){}
-  location.reload();
-}
-
-// Called by Google's script once the student picks an account.
-window.onGoogleCredential = async (res)=>{
-  const err = document.getElementById("liErr");
-  err.textContent = "Signing you in…";
-
-  setIdToken(res.credential);
-  const me = await fetchMe();
-
-  if (!me){
-    setIdToken("");
-    err.textContent = "Couldn't reach the server. Try again in a moment.";
-    return;
-  }
-  if (!me.ok){
-    setIdToken("");
-    err.textContent = "That sign-in didn't work. Try again.";
-    return;
-  }
-
-  const claims = jwtClaims(res.credential);
-  setProfile({
-    name: me.student || claims.name || claims.email || "",
-    email: me.email,
-    code: me.code || "",
-    updates: true
-  });
-
-  // Signed in fine, but the coach hasn't linked this address to a code yet.
-  // Everything except credits still works, so let them in and say so.
-  if (!me.found){
-    credits = null;
-    creditsUnlinked = true;
-  }
-
-  err.textContent = "";
-  enterApp();
-};
-
-function initGoogleSignIn(){
-  if (!AUTH_ON || !window.google || !google.accounts) return;
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: window.onGoogleCredential
-  });
-  google.accounts.id.renderButton(document.getElementById("gsiBtn"), {
-    theme: "outline", size: "large", width: 280, text: "signin_with"
-  });
-}
-
-// The Google script loads async, so it may land before or after this file runs.
-if (AUTH_ON){
-  document.getElementById("manualLogin").classList.add("hidden");
-  document.getElementById("gsiWrap").classList.remove("hidden");
-  document.getElementById("loginSub").textContent =
-    "Sign in with your Google account to continue.";
-  if (window.google && window.google.accounts) initGoogleSignIn();
-  else window.addEventListener("load", initGoogleSignIn);
-} else {
-  document.getElementById("gsiWrap").classList.add("hidden");
-}
-
-function bankCode(){
-  const p = getProfile();
-  return ((p && p.code) || "").toUpperCase();
-}
-function bankGranted(){
-  return DRILL_BANK[bankCode()] || 0;
-}
-function usedKey(){
-  return `drillroom_used_${bankCode() || "none"}_${bankGranted()}`;
-}
-function bankBalance(){
-  if (credits) return Math.max(0, credits.granted - credits.used);
-  if (creditsOffline) return 0;   // don't hand out credits we can't verify
-  return Math.max(0, bankGranted() - parseInt(store.get(usedKey()) || "0", 10));
-}
+let credits = null;           // {granted, used} for this account, else null
+let creditsOffline = false;   // signed in, but the balance didn't load
 
 // Fetch JSON from the Apps Script endpoint, loudly.
 // A deployment that isn't set to "Anyone" returns Google's HTML sign-in page
@@ -851,62 +624,222 @@ async function sheetFetch(url, opts){
   catch(e){ throw new Error("Unparseable JSON from the Sheet API: " + body.slice(0,120)); }
 }
 
-async function loadCredits(){
-  credits = null; creditsOffline = false; creditsUnlinked = false;
+// Every call carries the token. The server decides what it means; the only
+// thing this side gets to say is "here is my token".
+async function callApi(payload){
+  return await sheetFetch(SHEET_API, {
+    method:"POST", headers:{ "Content-Type":"text/plain" },
+    body: JSON.stringify(Object.assign({ idToken: idToken() }, payload))
+  });
+}
 
-  // Without sign-in there is no server to ask, so fall back to the
-  // honour-system balance in localStorage.
-  if (!AUTH_ON){ renderBank(); return; }
+// Read the token's own claims for display only -- the name to greet, the
+// avatar letter. Never for anything that decides access; the server re-checks.
+function jwtClaims(token){
+  try{
+    const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(part);
+    const bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch(e){ return {}; }
+}
 
-  const me = await fetchMe();
-  if (!me){ creditsOffline = true; }
-  else if (!me.ok){ signOut(); return; }          // token expired or revoked
-  else if (me.found){ credits = { granted: me.granted, used: me.used }; }
-  else { creditsUnlinked = true; }
+function signOut(){
+  setIdToken("");
+  store.del("drillroom_profile");
+  try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch(e){}
+  location.reload();
+}
+
+/* ---------- login screens ---------- */
+
+function showScreen(which, msg){
+  loginScreen.classList.remove("hidden");
+  app.classList.add("hidden");
+  document.getElementById("gsiWrap").classList.toggle("hidden", which !== "login");
+  document.getElementById("loginFoot").classList.toggle("hidden", which !== "login");
+  document.getElementById("blockedNotice").classList.toggle("hidden", which !== "blocked");
+  document.getElementById("setupNotice").classList.toggle("hidden", which !== "setup");
+  liErr.textContent = msg || "";
+}
+
+function showBlocked(email){
+  document.getElementById("blockedEmail").textContent = email || "that account";
+  document.getElementById("blockedMail").href =
+    `mailto:${COACH_EMAIL}?subject=${encodeURIComponent("[Drill Room] Please add me")}` +
+    `&body=${encodeURIComponent(`Hi Coach — please add this Google address to the Drill Room roster:\n\n${email || ""}\n`)}`;
+  document.getElementById("loginSub").textContent = "Signed in, but not enrolled.";
+  showScreen("blocked");
+}
+
+document.getElementById("blockedSwitch").addEventListener("click", e=>{
+  e.preventDefault();
+  signOut();
+});
+
+/* ---------- Google sign-in ---------- */
+
+// Called by Google's script once the student picks an account. All this does
+// is hand the token to the server and do what it says.
+window.onGoogleCredential = async (res)=>{
+  liErr.textContent = "Signing you in…";
+  setIdToken(res.credential);
+
+  let me;
+  try { me = await callApi({ action:"me" }); }
+  catch(e){
+    setIdToken("");
+    console.error("[Drill Room] Sign-in call failed.", e.message);
+    showScreen("login", "Couldn't reach the server. Try again in a moment.");
+    return;
+  }
+
+  if (!me || !me.ok){
+    setIdToken("");
+    showScreen("login", "That sign-in didn't work. Try again.");
+    return;
+  }
+  if (!me.enrolled){ showBlocked(me.email); return; }
+  startSession(me);
+};
+
+function initGoogleSignIn(){
+  if (!AUTH_ON || !window.google || !google.accounts) return;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: window.onGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+  google.accounts.id.renderButton(document.getElementById("gsiBtn"), {
+    theme: "outline", size: "large", width: 280, text: "signin_with",
+    shape: "rectangular"
+  });
+}
+
+/* ---------- entering the app ---------- */
+
+function startSession(me){
+  credits = me.code || me.granted ? { granted: me.granted || 0, used: me.used || 0 } : null;
+  creditsOffline = false;
+
+  const claims = jwtClaims(idToken());
+  setProfile({
+    name: me.student || claims.name || me.email || "",
+    email: me.email,
+    code: me.code || ""
+  });
+
+  loginScreen.classList.add("hidden");
+  app.classList.remove("hidden");
+  applyProfile();
+  loadContent();
+}
+
+function applyProfile(){
+  const p = getProfile(); if (!p) return;
+  const first = (p.name || p.email || "?").trim().split(/\s+/)[0];
+  document.getElementById("greeting").textContent = `Hi, ${first}.`;
+  document.getElementById("avatarBtn").textContent = (first[0] || "?").toUpperCase();
+  renderDrills();
   renderBank();
 }
 
-async function spendCredit(){
-  if (AUTH_ON){
-    if (!credits) return false;
-    try{
-      const j = await callApi({ action:"spend" });
-      if (j.ok){ credits.used = j.used; renderBank(); return true; }
-      if (j.error === "empty"){ credits.used = credits.granted; renderBank(); }
-      if (j.error === "signed out"){ signOut(); }
-      return false;
-    } catch(e){
-      console.error("[Drill Room] Couldn't spend a credit.", e.message);
-      return false;
-    }
+// Drills, events and the week label, filtered by the server to this student.
+async function loadContent(){
+  try{
+    const j = await callApi({ action:"content" });
+    if (!j || !j.ok){ if (j && j.error === "signed out") signOut(); return; }
+    DRILLS = Array.isArray(j.drills) ? j.drills : [];
+    EVENTS = Array.isArray(j.events) ? j.events : [];
+    if (j.weekLabel) document.getElementById("weekLabel").textContent = j.weekLabel;
+    renderDrills(); renderAgenda();
+  } catch(e){
+    console.error("[Drill Room] Couldn't load your drills.", e.message);
   }
-  store.set(usedKey(), String(parseInt(store.get(usedKey()) || "0", 10) + 1));
-  renderBank();
-  return true;
+}
+
+/* ---------- account sheet ---------- */
+
+const backdrop = document.getElementById("sheetBackdrop");
+document.getElementById("avatarBtn").addEventListener("click", ()=>{
+  const p = getProfile() || {};
+  document.getElementById("shName").textContent  = p.name || "—";
+  document.getElementById("shEmail").textContent = p.email || "—";
+  document.getElementById("shCode").textContent  = p.code || "none yet";
+  backdrop.classList.add("open");
+});
+document.getElementById("shSignOut").addEventListener("click", signOut);
+backdrop.addEventListener("click", e=>{ if (e.target===backdrop) backdrop.classList.remove("open"); });
+
+/* ---------- tabs ---------- */
+
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=> t.setAttribute("aria-selected","false"));
+    document.querySelectorAll(".panel").forEach(p=> p.classList.remove("active"));
+    tab.setAttribute("aria-selected","true");
+    document.getElementById(tab.dataset.panel).classList.add("active");
+  });
+});
+
+/* ---------- labels ---------- */
+
+// A deadline in the past helps nobody. (dstr is declared further down, so
+// this can't use it -- const is in the temporal dead zone until then.)
+(function(){
+  const t = new Date();
+  document.getElementById("frDue").min =
+    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+})();
+document.getElementById("footerText").textContent = `Watkins Debate · ${COACH_EMAIL}`;
+document.getElementById("setupMail").href = "mailto:" + COACH_EMAIL;
+
+/* ---------- drill bank ---------- */
+
+function bankCode(){
+  const p = getProfile();
+  return ((p && p.code) || "");
+}
+function bankBalance(){
+  if (creditsOffline) return 0;   // don't hand out credits we can't verify
+  if (!credits) return 0;
+  return Math.max(0, credits.granted - credits.used);
+}
+
+async function spendCredit(){
+  if (!credits) return false;
+  try{
+    const j = await callApi({ action:"spend" });
+    if (j.ok){ credits.used = j.used; renderBank(); return true; }
+    if (j.error === "empty"){ credits.used = credits.granted; renderBank(); }
+    if (j.error === "signed out"){ signOut(); }
+    return false;
+  } catch(e){
+    console.error("[Drill Room] Couldn't spend a credit.", e.message);
+    return false;
+  }
 }
 
 function renderBank(){
   const bal = bankBalance();
+  const noBank = !credits && !creditsOffline;
   // topbar chip
   const chip = document.getElementById("bankChip");
   document.getElementById("bankChipNum").textContent =
-    bal === 1 ? "1 credit" : `${bal} credits`;
+    creditsOffline ? "—" : bal === 1 ? "1 credit" : `${bal} credits`;
   chip.className = "chip" + (bal === 0 ? " empty" : bal <= 3 ? " low" : "");
   // request tab card
   const num = document.getElementById("bankNum");
-  num.textContent = bal;
+  num.textContent = creditsOffline ? "—" : bal;
   num.className = "bank-num" + (bal === 0 ? " empty" : "");
-  const unknownCode = SHEET_API && bankCode() && !credits && !creditsOffline;
   document.getElementById("bankTitle").textContent =
-    !bankCode() ? "No credit code yet"
-    : creditsOffline ? "Can't reach your balance"
-    : unknownCode ? "Code not recognized"
+    creditsOffline ? "Can't reach your balance"
+    : noBank ? "No drill bank yet"
     : bal === 0 ? "You're out of credits" : "Drill credits";
   document.getElementById("bankSub").textContent =
-    creditsUnlinked ? "Your coach hasn't linked this Google account to a credit code yet."
-    : !bankCode() ? "Add the code your coach gave you under Account (top right) to see your balance."
-    : creditsOffline ? "Something's wrong on our end. Try again in a minute, or email your coach."
-    : unknownCode ? "Check the code under Account (top right), or ask your coach for a new one."
+    creditsOffline ? "Something's wrong on our end. Try again in a minute, or email your coach."
+    : noBank ? "Your coach hasn't set up a drill bank for this account yet."
     : bal === 0 ? "Purchase a pack to keep requesting custom drills."
     : bal <= 3 ? `Each custom drill uses one credit. ${bal} left.`
     : "Each custom drill uses one credit.";
@@ -1166,32 +1099,48 @@ function renderAgenda(){
         <div class="dy">${d.getDate()}</div>
       </div>
       <div class="event-body">
-        <h4>${e.title}</h4>
-        <p>${[d.toLocaleDateString(undefined,{weekday:"long"}), e.time, e.note].filter(Boolean).join(" · ")}</p>
+        <h4>${esc(e.title)}</h4>
+        <p>${esc([d.toLocaleDateString(undefined,{weekday:"long"}), e.time, e.note].filter(Boolean).join(" · "))}</p>
       </div>
-      <span class="event-tag tag-${e.type}">${e.type}</span>`;
+      <span class="event-tag tag-${esc(e.type).replace(/[^a-z]/g,"")}">${esc(e.type)}</span>`;
     list.appendChild(row);
   });
 }
 
-// ---------- live content from the Google Sheet ----------
-async function loadContent(){
-  if (!SHEET_API) return;
-  try{
-    const j = await sheetFetch(SHEET_API);
-    if (Array.isArray(j.drills) && j.drills.length) DRILLS = j.drills;
-    if (Array.isArray(j.events)) EVENTS = j.events;
-    if (j.weekLabel) document.getElementById("weekLabel").textContent = j.weekLabel;
-    renderDrills(); renderAgenda();
-  } catch(e){
-    console.error("[Drill Room] Live content failed; showing the built-in lists.", e.message);
+// ---------- boot ----------
+
+renderBooking();
+renderAgenda();
+
+// Nothing is shown until the server has said who this is. A cached profile
+// only decides which screen to draw first, never whether to draw the app.
+(async function boot(){
+  if (!AUTH_ON){
+    document.getElementById("loginSub").textContent = "This site isn't ready yet.";
+    showScreen("setup");
+    return;
   }
-}
 
-renderBooking(); renderAgenda(); loadContent();
+  if (window.google && window.google.accounts) initGoogleSignIn();
+  else window.addEventListener("load", initGoogleSignIn);
 
-// ---------- init ----------
-if (getProfile()) enterApp();
+  if (!idToken()){ showScreen("login"); return; }
+
+  // A token from a previous visit. It expires in about an hour, so this is
+  // the common path back in — and the common path to being asked again.
+  liErr.textContent = "Signing you in…";
+  let me;
+  try { me = await callApi({ action:"me" }); }
+  catch(e){
+    console.error("[Drill Room] Couldn't check your sign-in.", e.message);
+    showScreen("login", "Couldn't reach the server. Try again in a moment.");
+    return;
+  }
+
+  if (!me || !me.ok){ setIdToken(""); showScreen("login"); return; }
+  if (!me.enrolled){ showBlocked(me.email); return; }
+  startSession(me);
+})();
 </script>
 </body>
 </html>

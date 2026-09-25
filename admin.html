@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach Dashboard — Drill Room</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FFFFFF">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#F6F6F4; --card:#FFFFFF; --text:#1C1C1C; --text-2:#5A5A5A; --text-3:#8A8A8A;
+  --line:#D9D9D6; --accent:#1F5C8B; --accent-dark:#174A71;
+  --green:#2E7D32; --red:#C62828; --amber:#B26A00;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.hidden{display:none !important}
+a{color:var(--accent)}
+
+/* ---------- gate ---------- */
+#gate{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.gate-card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);padding:32px 28px;text-align:center}
+.gate-card h1{font-size:21px;font-weight:700}
+.gate-card p.sub{font-size:14px;color:var(--text-2);margin:6px 0 22px}
+#gsiWrap{display:flex;justify-content:center;min-height:44px}
+.gate-err{font-size:13px;color:var(--red);font-weight:500;min-height:1.2em;margin-top:12px}
+.gate-note{margin-top:18px;font-size:12px;color:var(--text-3);line-height:1.5;text-align:left}
+.brand{margin-top:20px;font-size:13px;color:var(--text-3)}
+
+/* ---------- chrome ---------- */
+.topbar{position:sticky;top:0;z-index:30;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;height:52px}
+.logo{font-size:16px;font-weight:700}
+.logo span{color:var(--text-3);font-weight:400}
+.who{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:14px}
+.linkbtn{background:none;border:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer;padding:0}
+.linkbtn:hover{text-decoration:underline}
+
+.hero{padding:30px 0 6px}
+.hero h1{font-size:25px;font-weight:700}
+.hero p{color:var(--text-2);font-size:14.5px;margin-top:2px}
+
+h2.sec{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:34px 0 10px;font-weight:700}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:20px}
+.empty{background:var(--card);border:1px solid var(--line);padding:22px;text-align:center;color:var(--text-2);font-size:14px}
+
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line)}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);padding:10px 12px;background:#FAFAF8;font-weight:700;white-space:nowrap}
+td{padding:11px 12px;border-top:1px solid var(--line);vertical-align:top}
+.sub{color:var(--text-3);font-size:12.5px}
+.details{max-width:30em;white-space:pre-wrap}
+.due{font-weight:600;white-space:nowrap}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.num{font-weight:700;text-align:right;white-space:nowrap}
+tr.low .num{color:var(--amber)}
+tr.out .num{color:var(--red)}
+tr.done td{opacity:.45}
+.unlinked{color:var(--red);font-size:12.5px}
+.stat{display:flex;gap:26px;margin-top:10px}
+.stat div{font-size:13px;color:var(--text-2)}
+.stat b{display:block;font-size:20px;color:var(--text)}
+
+button.act{
+  font:inherit;font-size:13px;font-weight:600;padding:6px 12px;
+  border:1px solid var(--line);background:var(--card);color:var(--text);
+  border-radius:2px;cursor:pointer;white-space:nowrap
+}
+button.act:hover{background:#F0F4F8;border-color:var(--accent);color:var(--accent)}
+button.act:disabled{opacity:.5;cursor:default}
+button.act.danger:hover{border-color:var(--red);color:var(--red)}
+
+.btn{
+  font-family:inherit;font-size:15px;font-weight:600;background:var(--accent);color:#fff;
+  border:1px solid var(--accent);border-radius:2px;cursor:pointer;padding:11px 16px;width:100%
+}
+.btn:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn:disabled{opacity:.55;cursor:default}
+
+label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+input[type=text],input[type=email],input[type=number]{
+  width:100%;font-family:inherit;font-size:15px;color:var(--text);background:var(--card);
+  border:1px solid #C4C4C1;border-radius:2px;padding:10px 12px
+}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin-bottom:12px}
+.form-status{font-size:13.5px;font-weight:500;min-height:1.2em;margin-top:8px}
+.form-status.ok{color:var(--green)}
+.form-status.err{color:var(--red)}
+.addcard h3{font-size:16px;font-weight:700}
+.addcard > p{font-size:13px;color:var(--text-2);margin:4px 0 14px}
+footer{text-align:center;color:var(--text-3);font-size:12.5px;padding:40px 0}
+.scroll{overflow-x:auto}
+@media(max-width:640px){
+  .row{grid-template-columns:1fr}
+  .stat{gap:18px}
+  th,td{padding:9px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= SIGN-IN GATE ================= -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>Coach Dashboard</h1>
+    <p class="sub" id="gateSub">Sign in with your Google account.</p>
+    <div id="gsiWrap"><div id="gsiBtn"></div></div>
+    <p class="gate-err" id="gateErr" role="status"></p>
+    <div id="gateSetup" class="gate-note hidden">
+      <b>Not configured yet.</b> This page needs <code>GOOGLE_CLIENT_ID</code>
+      and <code>SHEET_API</code> filled in, same as the student site.
+      See <code>README.md</code>.
+    </div>
+    <p class="gate-note">Only the addresses listed in <code>ADMIN_EMAILS</code>
+       in the Apps Script can open this. The check runs on the server, so this
+       page is safe to leave public — it holds no data until you sign in.</p>
+  </div>
+  <p class="brand">Watkins Debate</p>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="dash" class="hidden">
+
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="logo">Drill Room <span>· Coach</span></div>
+    <div class="who">
+      <span id="whoEmail"></span>
+      <button class="linkbtn" id="refreshBtn">Refresh</button>
+      <button class="linkbtn" id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap hero">
+  <h1>Dashboard</h1>
+  <p>Open work first, then every student's drill bank.</p>
+  <div class="stat">
+    <div><b id="statOpen">—</b> open requests</div>
+    <div><b id="statStudents">—</b> students</div>
+    <div><b id="statLow">—</b> low or empty banks</div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <h2 class="sec">To do</h2>
+  <div id="workBox"></div>
+
+  <h2 class="sec">Roster &amp; drill banks</h2>
+  <div id="rosterBox"></div>
+
+  <h2 class="sec">Add a student</h2>
+  <div class="card addcard">
+    <h3>Enroll a Google account</h3>
+    <p>This is the only way onto the roster. Until an address is here, that
+       person signs in and is told they aren't enrolled &mdash; they see nothing.
+       Use the exact address they sign in to Google with.</p>
+    <form id="addForm">
+      <div class="row">
+        <div class="field">
+          <label for="adName">Student name</label>
+          <input type="text" id="adName" placeholder="Sebastian Alvarez" required>
+        </div>
+        <div class="field">
+          <label for="adEmail">Google account</label>
+          <input type="email" id="adEmail" placeholder="sebastian@gmail.com" required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="adCode">Drill bank label</label>
+          <input type="text" id="adCode" placeholder="FALCON-07" autocapitalize="characters">
+        </div>
+        <div class="field">
+          <label for="adGranted">Starting credits</label>
+          <input type="number" id="adGranted" value="0" min="0" max="100000" step="1">
+        </div>
+      </div>
+      <button class="btn" type="submit" id="addBtn">Add to roster</button>
+      <p class="form-status" id="addStatus" role="status"></p>
+    </form>
+  </div>
+
+</main>
+
+<footer>Watkins Debate · coach dashboard</footer>
+</div><!-- /dash -->
+
+<script>
+/* ---------------- CONFIG ---------------- */
+// Both must match index.html and sheet-backend.gs exactly.
+const SHEET_API = "https://script.google.com/macros/s/AKfycbyuYeaWpmqWyFnJhu_wyExe-dZK5X04OM56wFV9xiFAT7yCUyXmgcqIlnWiVy0UTrhvgg/exec";
+const GOOGLE_CLIENT_ID = "604736692184-9e0dv1jekuaqvkqgsuuatjgjlrg9bklu.apps.googleusercontent.com";
+
+const CONFIGURED = !!(SHEET_API && GOOGLE_CLIENT_ID);
+
+/* ---------------- session ---------------- */
+
+const mem = {};
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return (k in mem) ? mem[k] : null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
+  del(k){ try { localStorage.removeItem(k); } catch(e){ delete mem[k]; } }
+};
+
+const TOKEN_KEY = "drillroom_admin_idtoken";
+const idToken = () => store.get(TOKEN_KEY) || "";
+const setIdToken = t => t ? store.set(TOKEN_KEY, t) : store.del(TOKEN_KEY);
+
+const gate    = document.getElementById("gate");
+const dash    = document.getElementById("dash");
+const gateErr = document.getElementById("gateErr");
+
+function esc(v){
+  return String(v == null ? "" : v).replace(/[&<>"']/g, c => (
+    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]
+  ));
+}
+
+async function sheetFetch(url, opts){
+  const res  = await fetch(url, opts);
+  const body = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status} from the Sheet API — is the deployment still live?`);
+  if (/^\s*</.test(body)){
+    throw new Error("Got HTML instead of JSON, so the web app isn't public. " +
+      "Apps Script > Deploy > Manage deployments > Who has access: Anyone.");
+  }
+  try { return JSON.parse(body); }
+  catch(e){ throw new Error("Unparseable JSON: " + body.slice(0,120)); }
+}
+
+// The token goes with every call. Authorisation is decided on the server
+// against ADMIN_EMAILS — nothing here decides whether you are the coach.
+async function callApi(payload){
+  return await sheetFetch(SHEET_API, {
+    method:"POST", headers:{ "Content-Type":"text/plain" },
+    body: JSON.stringify(Object.assign({ idToken: idToken() }, payload))
+  });
+}
+
+function signOut(){
+  setIdToken("");
+  try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch(e){}
+  location.reload();
+}
+
+function showGate(msg){
+  gate.classList.remove("hidden");
+  dash.classList.add("hidden");
+  gateErr.textContent = msg || "";
+}
+
+/* ---------------- Google sign-in ---------------- */
+
+window.onGoogleCredential = async (res)=>{
+  gateErr.textContent = "Checking…";
+  setIdToken(res.credential);
+  await load(true);
+};
+
+function initGoogleSignIn(){
+  if (!CONFIGURED || !window.google || !google.accounts) return;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: window.onGoogleCredential,
+    auto_select: false
+  });
+  google.accounts.id.renderButton(document.getElementById("gsiBtn"), {
+    theme: "outline", size: "large", width: 280, text: "signin_with"
+  });
+}
+
+/* ---------------- rendering ---------------- */
+
+let DATA = { students: [], requests: [] };
+
+function renderWork(){
+  const box = document.getElementById("workBox");
+  const work = DATA.requests;
+  if (!work.length){
+    box.innerHTML = '<div class="empty">Nothing submitted yet.</div>';
+    return;
+  }
+  const rows = work.map(w => `
+    <tr class="${w.status === "done" ? "done" : ""}">
+      <td class="due">${esc(w.due || "—")}</td>
+      <td>${esc(w.student || "—")}<div class="sub">${esc(w.email)}</div></td>
+      <td>${esc(w.category)}${w.topic ? `<div class="sub">${esc(w.topic)}</div>` : ""}</td>
+      <td class="details">${esc(w.details)}</td>
+      <td class="sub">${esc(w.received)}</td>
+      <td><button class="act" data-act="status" data-row="${w.row}"
+            data-status="${w.status === "done" ? "open" : "done"}">${w.status === "done" ? "Reopen" : "Done"}</button></td>
+    </tr>`).join("");
+  box.innerHTML = `<div class="scroll"><table>
+    <tr><th>Needed by</th><th>Student</th><th>What</th><th>Details</th><th>Received</th><th></th></tr>
+    ${rows}</table></div>`;
+}
+
+function renderRoster(){
+  const box = document.getElementById("rosterBox");
+  const list = DATA.students;
+  if (!list.length){
+    box.innerHTML = '<div class="empty">Nobody on the roster yet. Add someone below.</div>';
+    return;
+  }
+  const rows = list.map(s => `
+    <tr class="${s.left <= 0 ? "out" : s.left <= 3 ? "low" : ""}">
+      <td>${esc(s.student || "—")}</td>
+      <td class="sub">${s.email ? esc(s.email) : '<span class="unlinked">not linked — cannot sign in</span>'}</td>
+      <td class="code">${esc(s.code || "—")}</td>
+      <td class="num">${s.left}</td>
+      <td class="num sub">${s.used}</td>
+      <td class="num sub">${s.granted}</td>
+      <td class="sub">${esc(s.last || "—")}</td>
+      <td>
+        <button class="act" data-act="grant" data-row="${s.row}" data-granted="${s.granted}"
+          data-name="${esc(s.student || s.email)}">Credits</button>
+        ${s.email ? `<button class="act danger" data-act="remove" data-row="${s.row}"
+          data-name="${esc(s.student || s.email)}">Revoke</button>` : ""}
+      </td>
+    </tr>`).join("");
+  box.innerHTML = `<div class="scroll"><table>
+    <tr><th>Student</th><th>Google account</th><th>Bank</th><th>Left</th><th>Used</th>
+        <th>Granted</th><th>Last used</th><th></th></tr>
+    ${rows}</table></div>`;
+}
+
+function renderStats(){
+  const open = DATA.requests.filter(w => w.status === "open").length;
+  const low  = DATA.students.filter(s => s.email && s.left <= 3).length;
+  document.getElementById("statOpen").textContent     = open;
+  document.getElementById("statStudents").textContent = DATA.students.filter(s => s.email).length;
+  document.getElementById("statLow").textContent      = low;
+}
+
+function render(){ renderStats(); renderWork(); renderRoster(); }
+
+/* ---------------- actions ---------------- */
+
+document.addEventListener("click", async ev=>{
+  const b = ev.target.closest("button.act");
+  if (!b) return;
+  const act = b.dataset.act;
+  b.disabled = true;
+
+  try{
+    if (act === "status"){
+      const j = await callApi({ action:"adminStatus", row:b.dataset.row, status:b.dataset.status });
+      if (!j.ok) throw new Error(j.error || "failed");
+    }
+    else if (act === "grant"){
+      const cur = b.dataset.granted;
+      const next = prompt(`Total credits granted to ${b.dataset.name} (all time).\n\n` +
+        `Raise this to top them up. Don't lower it to zero out usage — used credits are the history.`, cur);
+      if (next === null){ b.disabled = false; return; }
+      const n = Number(next);
+      if (!Number.isFinite(n) || n < 0){ alert("Enter a number."); b.disabled = false; return; }
+      const j = await callApi({ action:"adminGrant", row:b.dataset.row, granted:n });
+      if (!j.ok) throw new Error(j.error || "failed");
+    }
+    else if (act === "remove"){
+      if (!confirm(`Revoke access for ${b.dataset.name}?\n\n` +
+        `They'll be signed out and told they aren't enrolled. Their credit history is kept.`)){
+        b.disabled = false; return;
+      }
+      const j = await callApi({ action:"adminRemove", row:b.dataset.row });
+      if (!j.ok) throw new Error(j.error || "failed");
+    }
+    await load();
+  } catch(e){
+    b.disabled = false;
+    alert("Couldn't do that: " + e.message);
+  }
+});
+
+document.getElementById("addForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const status = document.getElementById("addStatus");
+  const btn = document.getElementById("addBtn");
+  btn.disabled = true;
+  status.className = "form-status";
+  status.textContent = "Adding…";
+  try{
+    const j = await callApi({
+      action:  "adminEnroll",
+      student: document.getElementById("adName").value.trim(),
+      email:   document.getElementById("adEmail").value.trim(),
+      code:    document.getElementById("adCode").value.trim().toUpperCase(),
+      granted: Number(document.getElementById("adGranted").value || 0)
+    });
+    if (!j.ok) throw new Error(j.error || "failed");
+    status.className = "form-status ok";
+    status.textContent = "Added. They can sign in now.";
+    e.target.reset();
+    document.getElementById("adGranted").value = "0";
+    await load();
+  } catch(err){
+    status.className = "form-status err";
+    status.textContent = "Couldn't add: " + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("signOutBtn").addEventListener("click", signOut);
+document.getElementById("refreshBtn").addEventListener("click", ()=> load());
+
+/* ---------------- boot ---------------- */
+
+async function load(fromSignIn){
+  let j;
+  try { j = await callApi({ action:"adminData" }); }
+  catch(e){
+    console.error("[Drill Room] Dashboard load failed.", e.message);
+    showGate("Couldn't reach the server. Try again in a moment.");
+    return;
+  }
+
+  if (!j || !j.ok){
+    const why = j && j.error === "not authorised"
+      ? "That account isn't on the admin list."
+      : "That sign-in didn't work. Try again.";
+    setIdToken("");
+    showGate(why);
+    return;
+  }
+
+  DATA = { students: j.students || [], requests: j.requests || [] };
+  document.getElementById("whoEmail").textContent = j.admin || "";
+  gate.classList.add("hidden");
+  dash.classList.remove("hidden");
+  gateErr.textContent = "";
+  render();
+}
+
+(async function boot(){
+  if (!CONFIGURED){
+    document.getElementById("gateSub").textContent = "This dashboard isn't ready yet.";
+    document.getElementById("gsiWrap").classList.add("hidden");
+    document.getElementById("gateSetup").classList.remove("hidden");
+    return;
+  }
+
+  if (window.google && window.google.accounts) initGoogleSignIn();
+  else window.addEventListener("load", initGoogleSignIn);
+
+  if (!idToken()){ showGate(); return; }
+  gateErr.textContent = "Checking…";
+  await load();
+})();
+</script>
+</body>
+</html>

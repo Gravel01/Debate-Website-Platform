@@ -48,7 +48,7 @@ a{color:var(--accent)}
 .login-card .sub{font-size:14px;color:var(--text-2);margin:6px 0 22px;}
 .login-card .field{margin-bottom:14px}
 label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
-input[type=text],input[type=email],select,textarea{
+input[type=text],input[type=email],input[type=password],select,textarea{
   width:100%;font-family:inherit;font-size:15px;color:var(--text);
   background:var(--card);border:1px solid #C4C4C1;border-radius:2px;
   padding:10px 12px;
@@ -74,6 +74,17 @@ textarea{min-height:100px;resize:vertical}
 .login-foot{margin-top:16px;font-size:12px;color:var(--text-3);line-height:1.5}
 .login-brand{margin-top:20px;font-size:13px;color:var(--text-3)}
 #gsiWrap{display:flex;justify-content:center;margin:4px 0 10px;min-height:44px}
+.or{display:flex;align-items:center;gap:12px;margin:10px 0 16px;font-size:12.5px;color:var(--text-3)}
+.or::before,.or::after{content:"";flex:1;border-top:1px solid var(--line)}
+.seg{display:flex;border:1px solid var(--line);border-radius:2px;margin-bottom:16px}
+.seg button{
+  flex:1;font-family:inherit;font-size:14px;font-weight:500;color:var(--text-2);
+  background:transparent;border:none;padding:8px 0;cursor:pointer;
+}
+.seg button[aria-selected="true"]{background:var(--accent);color:#fff;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:12px;color:var(--text-3);margin-top:4px}
+.login-card .linkish{display:inline-block;margin-top:12px;font-size:13px}
 .notice{
   text-align:left;background:var(--bg-2,#f6f7f9);border:1px solid var(--line,#e3e6eb);
   border-radius:10px;padding:16px;margin-top:4px
@@ -296,20 +307,67 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 <div id="loginScreen">
   <div class="login-card">
     <h1>Drill Room</h1>
-    <p class="sub" id="loginSub">Sign in with the Google account your coach has on file.</p>
+    <p class="sub" id="loginSub">Sign in, or create an account to get started.</p>
 
-    <div id="gsiWrap"><div id="gsiBtn"></div></div>
+    <div id="loginMain">
+      <div id="gsiWrap"><div id="gsiBtn"></div></div>
+
+      <div class="or">or use your email</div>
+
+      <div class="seg" role="tablist" aria-label="Email sign-in">
+        <button type="button" role="tab" id="modeIn" aria-selected="true">Sign in</button>
+        <button type="button" role="tab" id="modeUp" aria-selected="false">Create account</button>
+      </div>
+
+      <form id="pwForm" novalidate>
+        <div class="field hidden" id="pwNameField">
+          <label for="pwName">Your name</label>
+          <input type="text" id="pwName" autocomplete="name" maxlength="100" placeholder="Sebastian Alvarez">
+        </div>
+        <div class="field">
+          <label for="pwEmail">Email</label>
+          <input type="email" id="pwEmail" autocomplete="email" required placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="pwPass">Password</label>
+          <input type="password" id="pwPass" autocomplete="current-password" required minlength="8" maxlength="200">
+          <p class="hint hidden" id="pwHint">At least 8 characters.</p>
+        </div>
+        <button class="btn" type="submit" id="pwBtn">Sign in</button>
+      </form>
+    </div>
+
+    <!-- Step 2 of an email sign-up: prove the address is yours. -->
+    <form id="codeForm" class="hidden" novalidate>
+      <p class="sub" style="margin-top:0">We emailed a 6-digit code to
+         <b id="codeEmail"></b>. Enter it to finish creating your account.</p>
+      <div class="field">
+        <label for="pwCode">Code</label>
+        <input type="text" id="pwCode" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="6" placeholder="123456">
+      </div>
+      <button class="btn" type="submit" id="codeBtn">Create account</button>
+      <a href="#" class="linkish" id="codeBack">Back</a>
+    </form>
 
     <p class="login-err" id="liErr" role="status"></p>
 
-    <!-- Google says who you are, but that address isn't on the roster. -->
+    <!-- Account exists, but the coach hasn't approved it yet. -->
+    <div id="pendingNotice" class="notice hidden">
+      <h3>Waiting for approval</h3>
+      <p>Thanks<span id="pendingName"></span>. Your account (<b id="pendingEmail"></b>)
+         is set up, and your coach has been told. You'll see your drills as
+         soon as they approve you.</p>
+      <button class="btn secondary" type="button" id="pendingCheck" style="margin-top:6px">Check again</button>
+      <a href="#" class="linkish" id="pendingSwitch">Sign out</a>
+    </div>
+
+    <!-- Signed in, but this account can't get in: revoked, or sign-ups closed. -->
     <div id="blockedNotice" class="notice hidden">
-      <h3>You're not on the roster yet</h3>
-      <p>You signed in as <b id="blockedEmail"></b>, but your coach hasn't added
-         that address. Accounts are created by your coach — there's no sign-up here.</p>
-      <p>Email <a id="blockedMail" href="#">your coach</a> and ask them to add
-         this exact address, or
-         <a href="#" id="blockedSwitch">try a different Google account</a>.</p>
+      <h3 id="blockedTitle">No access</h3>
+      <p>You signed in as <b id="blockedEmail"></b>. <span id="blockedWhy"></span></p>
+      <p>Email <a id="blockedMail" href="#">your coach</a> if you think this is
+         a mistake, or <a href="#" id="blockedSwitch">use a different account</a>.</p>
     </div>
 
     <!-- The backend hasn't been configured yet. Nobody gets in. -->
@@ -321,8 +379,9 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
       <p>Questions: <a id="setupMail" href="#">your coach</a>.</p>
     </div>
 
-    <p class="login-foot" id="loginFoot">Your coach creates accounts. Nobody can sign
-       up on your behalf, and nobody else can see your drills.</p>
+    <p class="login-foot" id="loginFoot">New accounts are approved by your coach
+       before they can see drills. Nobody else can see yours.
+       <a href="privacy.html">Privacy</a></p>
   </div>
   <p class="login-brand">Watkins Debate</p>
 </div>
@@ -510,11 +569,11 @@ footer{padding:0 0 44px;text-align:center;font-size:12.5px;color:var(--text-3)}
 <div class="sheet-backdrop" id="sheetBackdrop">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h3 id="sheetTitle">Account</h3>
-    <p>Signed in with Google. Your coach sets your name and drill bank, so
-       there's nothing to edit here.</p>
+    <p>Your coach manages your name and drill bank. Email them if either
+       needs changing.</p>
     <dl class="acct">
       <dt>Name</dt><dd id="shName">—</dd>
-      <dt>Google account</dt><dd id="shEmail">—</dd>
+      <dt>Email</dt><dd id="shEmail">—</dd>
       <dt>Drill bank</dt><dd id="shCode">—</dd>
     </dl>
     <button class="btn quiet" id="shSignOut">Sign Out</button>
@@ -596,6 +655,8 @@ const liErr = document.getElementById("liErr");
 
 /* ---------- session ---------- */
 
+// Either a Google ID token or a session token the server issued after an
+// email + password sign-in. The server tells them apart; this side doesn't care.
 const ID_TOKEN_KEY = "drillroom_idtoken";
 function idToken(){ return store.get(ID_TOKEN_KEY) || ""; }
 function setIdToken(t){ t ? store.set(ID_TOKEN_KEY, t) : store.del(ID_TOKEN_KEY); }
@@ -645,6 +706,14 @@ function jwtClaims(token){
 }
 
 function signOut(){
+  // End a password session on the server too. Best effort: it expires anyway.
+  // keepalive, so the reload below doesn't cancel it.
+  if (idToken().startsWith("drs_")){
+    fetch(SHEET_API, {
+      method:"POST", headers:{ "Content-Type":"text/plain" }, keepalive:true,
+      body: JSON.stringify({ idToken: idToken(), action:"logout" })
+    }).catch(()=>{});
+  }
   setIdToken("");
   store.del("drillroom_profile");
   try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch(e){}
@@ -656,19 +725,31 @@ function signOut(){
 function showScreen(which, msg){
   loginScreen.classList.remove("hidden");
   app.classList.add("hidden");
-  document.getElementById("gsiWrap").classList.toggle("hidden", which !== "login");
+  document.getElementById("loginMain").classList.toggle("hidden", which !== "login");
   document.getElementById("loginFoot").classList.toggle("hidden", which !== "login");
+  document.getElementById("codeForm").classList.toggle("hidden", which !== "code");
   document.getElementById("blockedNotice").classList.toggle("hidden", which !== "blocked");
+  document.getElementById("pendingNotice").classList.toggle("hidden", which !== "pending");
   document.getElementById("setupNotice").classList.toggle("hidden", which !== "setup");
+  if (which === "login") document.getElementById("loginSub").textContent =
+    "Sign in, or create an account to get started.";
   liErr.textContent = msg || "";
 }
 
-function showBlocked(email){
+// why: "revoked" (the coach locked this account) or "closed" (sign-ups are off
+// and this address has no account yet).
+function showBlocked(email, why){
+  const closed = why === "closed";
   document.getElementById("blockedEmail").textContent = email || "that account";
+  document.getElementById("blockedTitle").textContent =
+    closed ? "Sign-ups are closed" : "This account is closed";
+  document.getElementById("blockedWhy").textContent = closed
+    ? "New accounts aren't being accepted right now."
+    : "Your coach has turned off access for this account.";
   document.getElementById("blockedMail").href =
-    `mailto:${COACH_EMAIL}?subject=${encodeURIComponent("[Drill Room] Please add me")}` +
-    `&body=${encodeURIComponent(`Hi Coach — please add this Google address to the Drill Room roster:\n\n${email || ""}\n`)}`;
-  document.getElementById("loginSub").textContent = "Signed in, but not enrolled.";
+    `mailto:${COACH_EMAIL}?subject=${encodeURIComponent("[Drill Room] Access")}` +
+    `&body=${encodeURIComponent(`Hi Coach — I can't get into Drill Room with this address:\n\n${email || ""}\n`)}`;
+  document.getElementById("loginSub").textContent = "Signed in, but no access.";
   showScreen("blocked");
 }
 
@@ -676,6 +757,66 @@ document.getElementById("blockedSwitch").addEventListener("click", e=>{
   e.preventDefault();
   signOut();
 });
+
+function showPending(me){
+  const first = (me.student || "").trim().split(/\s+/)[0];
+  document.getElementById("pendingName").textContent = first ? `, ${first}` : "";
+  document.getElementById("pendingEmail").textContent = me.email || "";
+  document.getElementById("loginSub").textContent = "Almost there.";
+  showScreen("pending");
+}
+
+document.getElementById("pendingSwitch").addEventListener("click", e=>{
+  e.preventDefault();
+  signOut();
+});
+
+// Re-asks the server with the token already held. A Google token expires
+// after about an hour, so a stale one lands back on the sign-in screen.
+document.getElementById("pendingCheck").addEventListener("click", async e=>{
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  liErr.textContent = "Checking…";
+  try {
+    const me = await callApi({ action:"me" });
+    if (me && me.error === "signed out"){ setIdToken(""); showScreen("login", "Sign in again to continue."); return; }
+    await enter(me, "");
+    if (me && me.pending) liErr.textContent = "Not approved yet.";
+  } catch(err){
+    liErr.textContent = "Couldn't reach the server. Try again in a moment.";
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Takes the server's answer about who this is and goes where it says. A
+// verified account with no roster row yet gets one created here -- that's
+// what signing in for the first time means.
+async function enter(me, name){
+  if (!me || !me.ok){
+    setIdToken("");
+    showScreen("login", "That sign-in didn't work. Try again.");
+    return;
+  }
+  if (me.enrolled){ startSession(me); return; }
+  if (me.revoked){ showBlocked(me.email, "revoked"); return; }
+  if (me.pending){ showPending(me); return; }
+
+  liErr.textContent = "Setting up your account…";
+  let r;
+  try { r = await callApi({ action:"register", name: name || "" }); }
+  catch(e){
+    console.error("[Drill Room] Couldn't create the account.", e.message);
+    showScreen("login", "Couldn't reach the server. Try again in a moment.");
+    return;
+  }
+  if (r && r.ok && r.enrolled){ startSession(r); return; }
+  if (r && r.revoked){ showBlocked(me.email, "revoked"); return; }
+  if (r && r.pending){ showPending(r); return; }
+  if (r && r.error === "signups closed"){ showBlocked(me.email, "closed"); return; }
+  setIdToken("");
+  showScreen("login", "Couldn't set up your account. Try again.");
+}
 
 /* ---------- Google sign-in ---------- */
 
@@ -693,14 +834,7 @@ window.onGoogleCredential = async (res)=>{
     showScreen("login", "Couldn't reach the server. Try again in a moment.");
     return;
   }
-
-  if (!me || !me.ok){
-    setIdToken("");
-    showScreen("login", "That sign-in didn't work. Try again.");
-    return;
-  }
-  if (!me.enrolled){ showBlocked(me.email); return; }
-  startSession(me);
+  await enter(me, jwtClaims(res.credential).name);
 };
 
 function initGoogleSignIn(){
@@ -712,10 +846,111 @@ function initGoogleSignIn(){
     cancel_on_tap_outside: true
   });
   google.accounts.id.renderButton(document.getElementById("gsiBtn"), {
-    theme: "outline", size: "large", width: 280, text: "signin_with",
+    theme: "outline", size: "large", width: 280, text: "continue_with",
     shape: "rectangular"
   });
 }
+
+/* ---------- email + password ---------- */
+
+const pwForm = document.getElementById("pwForm");
+const pwName = document.getElementById("pwName");
+const pwEmail = document.getElementById("pwEmail");
+const pwPass = document.getElementById("pwPass");
+const pwBtn = document.getElementById("pwBtn");
+const codeForm = document.getElementById("codeForm");
+const codeBtn = document.getElementById("codeBtn");
+let signingUp = false;
+let pendingEmail = "";
+
+function setMode(up){
+  signingUp = up;
+  document.getElementById("modeIn").setAttribute("aria-selected", String(!up));
+  document.getElementById("modeUp").setAttribute("aria-selected", String(up));
+  document.getElementById("pwNameField").classList.toggle("hidden", !up);
+  document.getElementById("pwHint").classList.toggle("hidden", !up);
+  pwPass.autocomplete = up ? "new-password" : "current-password";
+  pwBtn.textContent = up ? "Create account" : "Sign in";
+  liErr.textContent = "";
+}
+document.getElementById("modeIn").addEventListener("click", ()=> setMode(false));
+document.getElementById("modeUp").addEventListener("click", ()=> setMode(true));
+
+// Error strings from the server are written for students, so show them as-is.
+function friendly(j, fallback){
+  if (j && j.error === "signups closed") return "New accounts aren't being accepted right now.";
+  if (j && j.error === "busy, try again") return "The server is busy. Try again.";
+  return (j && j.error) || fallback;
+}
+
+pwForm.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const email = pwEmail.value.trim().toLowerCase();
+  const password = pwPass.value;
+  const name = pwName.value.trim();
+  if (signingUp && !name){ liErr.textContent = "Enter your name."; pwName.focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ liErr.textContent = "Enter a valid email address."; pwEmail.focus(); return; }
+  if (password.length < 8){
+    liErr.textContent = signingUp ? "Use a password of at least 8 characters." : "Wrong email or password.";
+    pwPass.focus(); return;
+  }
+
+  pwBtn.disabled = true;
+  liErr.textContent = signingUp ? "Sending your code…" : "Signing you in…";
+  try{
+    if (signingUp){
+      const j = await callApi({ action:"signupStart", email, password, name });
+      if (!j.ok){ liErr.textContent = friendly(j, "Couldn't start sign-up. Try again."); return; }
+      pendingEmail = email;
+      document.getElementById("codeEmail").textContent = email;
+      document.getElementById("loginSub").textContent = "Check your email.";
+      showScreen("code");
+      document.getElementById("pwCode").focus();
+    } else {
+      const j = await callApi({ action:"login", email, password });
+      if (!j.ok || !j.session){ liErr.textContent = friendly(j, "Wrong email or password."); return; }
+      setIdToken(j.session);
+      pwPass.value = "";
+      await enter(j, "");
+    }
+  } catch(err){
+    console.error("[Drill Room] Email sign-in failed.", err.message);
+    liErr.textContent = "Couldn't reach the server. Try again in a moment.";
+  } finally {
+    pwBtn.disabled = false;
+  }
+});
+
+codeForm.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const code = document.getElementById("pwCode").value.replace(/\D/g, "");
+  if (code.length !== 6){ liErr.textContent = "Enter the 6-digit code from the email."; return; }
+  codeBtn.disabled = true;
+  liErr.textContent = "Creating your account…";
+  try{
+    const j = await callApi({ action:"signupFinish", email: pendingEmail, code });
+    if (!j.ok || !j.session){
+      liErr.textContent = friendly(j, "Couldn't create the account. Try again.");
+      // An expired or burned code can't be retried; send them back to start over.
+      if (/start again/i.test(j.error || "")){ setMode(true); showScreen("login", j.error); }
+      return;
+    }
+    setIdToken(j.session);
+    pwPass.value = "";
+    await enter(j, "");
+  } catch(err){
+    console.error("[Drill Room] Couldn't finish sign-up.", err.message);
+    liErr.textContent = "Couldn't reach the server. Try again in a moment.";
+  } finally {
+    codeBtn.disabled = false;
+  }
+});
+
+document.getElementById("codeBack").addEventListener("click", e=>{
+  e.preventDefault();
+  document.getElementById("pwCode").value = "";
+  showScreen("login");
+});
 
 /* ---------- entering the app ---------- */
 
@@ -1138,8 +1373,7 @@ renderAgenda();
   }
 
   if (!me || !me.ok){ setIdToken(""); showScreen("login"); return; }
-  if (!me.enrolled){ showBlocked(me.email); return; }
-  startSession(me);
+  await enter(me, jwtClaims(idToken()).name);
 })();
 </script>
 </body>

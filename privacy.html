@@ -47,7 +47,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;ba
 
 <main class="wrap">
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated 24 September 2026</p>
+  <p class="updated">Last updated 29 September 2026</p>
 
   <p class="lede">Drill Room is a private coaching tool for students of Watkins
      Debate. It is not a public service and has no advertising, no analytics,
@@ -60,10 +60,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;ba
      <a href="mailto:debate@nwatkins.org">debate@nwatkins.org</a>.</p>
 
   <h2>Who can use it</h2>
-  <p>Access is by invitation only. Your coach adds your Google address to a
-     roster; there is no sign-up. If your address is not on that roster you
-     can sign in with Google, but you will see nothing and no record of you
-     is created beyond the sign-in itself.</p>
+  <p>Anyone can create an account, either with Google or with an email
+     address and password. Creating one adds your name and email to your
+     coach's roster and emails your coach to let them know. You see nothing
+     until your coach approves the account. Your coach can close an account,
+     and can stop accepting new ones.</p>
 
   <h2>What is collected</h2>
 
@@ -75,6 +76,16 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;ba
        you are. It expires about an hour after it is issued.</p>
     <p>The site requests no other Google permissions. It cannot read your
        Gmail, your Drive, your contacts, or your calendar.</p>
+  </div>
+
+  <div class="card">
+    <h3>If you sign up with email and password</h3>
+    <p>The site sends a one-time code to your address to confirm it is yours.
+       It stores your <b>name</b>, your <b>email</b>, and a salted, one-way
+       <b>hash</b> of your password. Your password itself is never stored and
+       your coach cannot see it. After you sign in, the site keeps a random
+       sign-in token in your browser that stops working after six hours or
+       when you sign out.</p>
   </div>
 
   <div class="card">
@@ -129,15 +140,15 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;ba
   <h2>How long it is kept</h2>
   <p>Roster entries, credit balances, and past requests are kept for as long
      as you are coached, and for a reasonable period afterwards as a record of
-     work done. Sign-in tokens expire in about an hour and are discarded when
-     you sign out.</p>
+     work done. Google sign-in tokens expire in about an hour, email sign-in
+     tokens after six hours, and both are discarded when you sign out.</p>
 
   <h2>Your choices</h2>
   <ul>
     <li><b>See what is held about you.</b> Email your coach and ask.</li>
     <li><b>Correct it.</b> Same — your coach edits the Sheet directly.</li>
-    <li><b>Delete it.</b> Ask and your roster row and requests will be removed.
-        This also ends your access, since the roster is what grants it.</li>
+    <li><b>Delete it.</b> Ask and your roster row, your login, and your
+        requests will be removed. This also ends your access.</li>
     <li><b>Revoke Google access</b> at any time from
         <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">your
         Google account permissions page</a>.</li>
@@ -154,11 +165,12 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;ba
      removed on request.</p>
 
   <h2>Security</h2>
-  <p>Every request to the server carries your Google token, and the server
-     checks that token with Google before answering. It answers only for the
-     account the token belongs to, so one student cannot read another's
-     drills, balance, or requests. There is no password to steal because
-     there is no password.</p>
+  <p>Every request to the server carries your sign-in token: a Google token,
+     which the server checks with Google, or a random token the server issued
+     when you signed in with your password. It answers only for the account
+     the token belongs to, so one student cannot read another's drills,
+     balance, or requests. Passwords are stored only as salted hashes, and
+     repeated wrong guesses are slowed down.</p>
 
   <h2>Changes</h2>
   <p>If this policy changes materially, the date at the top will change and

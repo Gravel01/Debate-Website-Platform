@@ -63,7 +63,8 @@ tr.low .num{color:var(--amber)}
 tr.out .num{color:var(--red)}
 tr.done td{opacity:.45}
 .unlinked{color:var(--red);font-size:12.5px}
-.stat{display:flex;gap:26px;margin-top:10px}
+.waiting{color:var(--accent);font-size:12.5px;font-weight:600}
+.stat{display:flex;flex-wrap:wrap;gap:26px;margin-top:10px}
 .stat div{font-size:13px;color:var(--text-2)}
 .stat b{display:block;font-size:20px;color:var(--text)}
 
@@ -144,6 +145,7 @@ footer{text-align:center;color:var(--text-3);font-size:12.5px;padding:40px 0}
   <h1>Dashboard</h1>
   <p>Open work first, then every student's drill bank.</p>
   <div class="stat">
+    <div><b id="statPending">—</b> awaiting approval</div>
     <div><b id="statOpen">—</b> open requests</div>
     <div><b id="statStudents">—</b> students</div>
     <div><b id="statLow">—</b> low or empty banks</div>
@@ -160,10 +162,12 @@ footer{text-align:center;color:var(--text-3);font-size:12.5px;padding:40px 0}
 
   <h2 class="sec">Add a student</h2>
   <div class="card addcard">
-    <h3>Enroll a Google account</h3>
-    <p>This is the only way onto the roster. Until an address is here, that
-       person signs in and is told they aren't enrolled &mdash; they see nothing.
-       Use the exact address they sign in to Google with.</p>
+    <h3>Add someone ahead of time</h3>
+    <p>Students can sign themselves up; those accounts wait for your approval
+       in the list above. Adding someone here approves them in advance, with a
+       bank label and credits already set. If they have already signed up,
+       this approves them and applies the label and credits. Use the exact
+       address they'll sign in with.</p>
     <form id="addForm">
       <div class="row">
         <div class="field">
@@ -171,7 +175,7 @@ footer{text-align:center;color:var(--text-3);font-size:12.5px;padding:40px 0}
           <input type="text" id="adName" placeholder="Sebastian Alvarez" required>
         </div>
         <div class="field">
-          <label for="adEmail">Google account</label>
+          <label for="adEmail">Email</label>
           <input type="email" id="adEmail" placeholder="sebastian@gmail.com" required>
         </div>
       </div>
@@ -312,10 +316,22 @@ function renderRoster(){
     box.innerHTML = '<div class="empty">Nobody on the roster yet. Add someone below.</div>';
     return;
   }
+  const who = s => esc(s.student || s.email);
+  const actions = s => {
+    if (!s.email) return "";
+    if (s.pending) return `
+      <button class="act" data-act="restore" data-email="${esc(s.email)}" data-name="${who(s)}">Approve</button>
+      <button class="act danger" data-act="reject" data-row="${s.row}" data-name="${who(s)}">Reject</button>`;
+    if (s.revoked) return `
+      <button class="act" data-act="restore" data-email="${esc(s.email)}" data-name="${who(s)}">Restore</button>`;
+    return `
+      <button class="act danger" data-act="remove" data-row="${s.row}" data-name="${who(s)}">Revoke</button>`;
+  };
   const rows = list.map(s => `
-    <tr class="${s.left <= 0 ? "out" : s.left <= 3 ? "low" : ""}">
+    <tr class="${s.pending ? "pending" : s.left <= 0 ? "out" : s.left <= 3 ? "low" : ""}">
       <td>${esc(s.student || "—")}</td>
-      <td class="sub">${s.email ? esc(s.email) : '<span class="unlinked">not linked — cannot sign in</span>'}</td>
+      <td class="sub">${s.email ? esc(s.email) : '<span class="unlinked">not linked — cannot sign in</span>'}${
+        s.revoked ? '<div class="unlinked">revoked</div>' : s.pending ? '<div class="waiting">waiting for approval</div>' : ""}</td>
       <td class="code">${esc(s.code || "—")}</td>
       <td class="num">${s.left}</td>
       <td class="num sub">${s.used}</td>
@@ -323,22 +339,22 @@ function renderRoster(){
       <td class="sub">${esc(s.last || "—")}</td>
       <td>
         <button class="act" data-act="grant" data-row="${s.row}" data-granted="${s.granted}"
-          data-name="${esc(s.student || s.email)}">Credits</button>
-        ${s.email ? `<button class="act danger" data-act="remove" data-row="${s.row}"
-          data-name="${esc(s.student || s.email)}">Revoke</button>` : ""}
+          data-name="${who(s)}">Credits</button>${actions(s)}
       </td>
     </tr>`).join("");
   box.innerHTML = `<div class="scroll"><table>
-    <tr><th>Student</th><th>Google account</th><th>Bank</th><th>Left</th><th>Used</th>
+    <tr><th>Student</th><th>Email</th><th>Bank</th><th>Left</th><th>Used</th>
         <th>Granted</th><th>Last used</th><th></th></tr>
     ${rows}</table></div>`;
 }
 
 function renderStats(){
   const open = DATA.requests.filter(w => w.status === "open").length;
-  const low  = DATA.students.filter(s => s.email && s.left <= 3).length;
+  const active = DATA.students.filter(s => s.email && !s.revoked && !s.pending);
+  const low  = active.filter(s => s.left <= 3).length;
+  document.getElementById("statPending").textContent  = DATA.students.filter(s => s.pending).length;
   document.getElementById("statOpen").textContent     = open;
-  document.getElementById("statStudents").textContent = DATA.students.filter(s => s.email).length;
+  document.getElementById("statStudents").textContent = active.length;
   document.getElementById("statLow").textContent      = low;
 }
 
@@ -369,10 +385,24 @@ document.addEventListener("click", async ev=>{
     }
     else if (act === "remove"){
       if (!confirm(`Revoke access for ${b.dataset.name}?\n\n` +
-        `They'll be signed out and told they aren't enrolled. Their credit history is kept.`)){
+        `They'll be signed out and can't sign back in or make a new account with ` +
+        `that address. Their credit history is kept, and you can restore them later.`)){
         b.disabled = false; return;
       }
       const j = await callApi({ action:"adminRemove", row:b.dataset.row });
+      if (!j.ok) throw new Error(j.error || "failed");
+    }
+    else if (act === "reject"){
+      if (!confirm(`Reject ${b.dataset.name}?\n\n` +
+        `They won't get in, and can't sign up again with that address. ` +
+        `You can still approve them later from this list.`)){
+        b.disabled = false; return;
+      }
+      const j = await callApi({ action:"adminRemove", row:b.dataset.row });
+      if (!j.ok) throw new Error(j.error || "failed");
+    }
+    else if (act === "restore"){
+      const j = await callApi({ action:"adminEnroll", email:b.dataset.email });
       if (!j.ok) throw new Error(j.error || "failed");
     }
     await load();
@@ -399,7 +429,7 @@ document.getElementById("addForm").addEventListener("submit", async e=>{
     });
     if (!j.ok) throw new Error(j.error || "failed");
     status.className = "form-status ok";
-    status.textContent = "Added. They can sign in now.";
+    status.textContent = j.approved ? "Approved. They can sign in now." : "Added. They can sign in now.";
     e.target.reset();
     document.getElementById("adGranted").value = "0";
     await load();
